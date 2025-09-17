@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="grey">#FF3A3A3C</color>
+    <color name="light_grey">#FF818384</color>
+    <color name="yellow">#FFB59F3B</color>
+    <color name="green">#FF538D4E</color>
+    <color name="transparent">#00000000</color>
+    <color name="keyboard_key_background">#FF818384</color>
+    <color name="primary_dark">#FF192131</color>
+    <color name="primary_variant">#FF2A3343</color>
+    <color name="primary_light">#FF465063</color>
+    <color name="accent">#FF02A2FD</color>
+    <color name="gold">#FFFBBC04</color>
+    <color name="dark_grey">#787C7E</color>
+     <color name="green_speedle">#39E75F</color>
+    <color name="blue_leaderboard">#5D7EFF</color>
+    <color name="pink_multiplayer">#E7398D</color>
+    <color name="yellow_daily">#FFD700</color>
+    <color name="icon_tint">#FFD5D7DA</color>
+</resources>
