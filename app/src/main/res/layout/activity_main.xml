@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/primary_dark"
+    tools:context="vcmsa.projects.wordleandroidclient.MainActivity">
+
+
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:id="@+id/btnBack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_media_previous"
+            app:tint="@color/icon_tint" />
+
+        <TextView
+            android:id="@+id/tvGameTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Daily WordRush"
+            android:textColor="@color/gold"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center" />
+        <ImageView
+            android:id="@+id/btnSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:src="@android:drawable/ic_menu_edit"
+            app:tint="@color/icon_tint" />
+        <ImageView
+            android:id="@+id/btnHelp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_menu_help"
+            app:tint="@color/icon_tint" />
+    </LinearLayout>
+
+    <!-- Game Board -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvGameBoard"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintTop_toBottomOf="@id/topBar"
+        app:layout_constraintBottom_toTopOf="@id/llPowerups"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Power-ups -->
+    <LinearLayout
+        android:id="@+id/llPowerups"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toTopOf="@id/llKeyboard"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:id="@+id/btnPowerup1"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="8dp"
+            android:src="@android:drawable/ic_dialog_info"
+            app:tint="@color/accent" />
+
+        <ImageView
+            android:id="@+id/btnPowerup2"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="8dp"
+            android:src="@android:drawable/ic_dialog_email"
+            app:tint="@color/accent" />
+
+        <ImageView
+            android:id="@+id/btnPowerup3"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="8dp"
+            android:src="@android:drawable/ic_menu_rotate"
+            app:tint="@color/accent" />
+
+    </LinearLayout>
+
+    <!-- Keyboard -->
+    <LinearLayout
+        android:id="@+id/llKeyboard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Keyboard Row 1 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button android:id="@+id/btnQ" style="@style/KeyboardKey" android:text="Q" />
+            <Button android:id="@+id/btnW" style="@style/KeyboardKey" android:text="W" />
+            <Button android:id="@+id/btnE" style="@style/KeyboardKey" android:text="E" />
+            <Button android:id="@+id/btnR" style="@style/KeyboardKey" android:text="R" />
+            <Button android:id="@+id/btnT" style="@style/KeyboardKey" android:text="T" />
+            <Button android:id="@+id/btnY" style="@style/KeyboardKey" android:text="Y" />
+            <Button android:id="@+id/btnU" style="@style/KeyboardKey" android:text="U" />
+            <Button android:id="@+id/btnI" style="@style/KeyboardKey" android:text="I" />
+            <Button android:id="@+id/btnO" style="@style/KeyboardKey" android:text="O" />
+            <Button android:id="@+id/btnP" style="@style/KeyboardKey" android:text="P" />
+        </LinearLayout>
+
+
+        <!-- Keyboard Row 2 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button android:id="@+id/btnA" style="@style/KeyboardKey" android:text="A" />
+            <Button android:id="@+id/btnS" style="@style/KeyboardKey" android:text="S" />
+            <Button android:id="@+id/btnD" style="@style/KeyboardKey" android:text="D" />
+            <Button android:id="@+id/btnF" style="@style/KeyboardKey" android:text="F" />
+            <Button android:id="@+id/btnG" style="@style/KeyboardKey" android:text="G" />
+            <Button android:id="@+id/btnH" style="@style/KeyboardKey" android:text="H" />
+            <Button android:id="@+id/btnJ" style="@style/KeyboardKey" android:text="J" />
+            <Button android:id="@+id/btnK" style="@style/KeyboardKey" android:text="K" />
+            <Button android:id="@+id/btnL" style="@style/KeyboardKey" android:text="L" />
+        </LinearLayout>
+
+
+        <!-- Keyboard Row 3 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button android:id="@+id/btnEnter" style="@style/KeyboardKey" android:text="ENTER" android:layout_weight="1.5" />
+            <Button android:id="@+id/btnZ" style="@style/KeyboardKey" android:text="Z" />
+            <Button android:id="@+id/btnX" style="@style/KeyboardKey" android:text="X" />
+            <Button android:id="@+id/btnC" style="@style/KeyboardKey" android:text="C" />
+            <Button android:id="@+id/btnV" style="@style/KeyboardKey" android:text="V" />
+            <Button android:id="@+id/btnB" style="@style/KeyboardKey" android:text="B" />
+            <Button android:id="@+id/btnN" style="@style/KeyboardKey" android:text="N" />
+            <Button android:id="@+id/btnM" style="@style/KeyboardKey" android:text="M" />
+            <Button android:id="@+id/btnBackspace" style="@style/KeyboardKey" android:text="BACK" android:layout_weight="1.5" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Bottom Navigation Bar -->
+    <LinearLayout
+        android:id="@+id/bottomNav"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="8dp"
+        android:background="@color/primary_variant"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:id="@+id/navHome"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@android:drawable/ic_menu_slideshow"
+            app:tint="@color/accent" />
+
+        <ImageView
+            android:id="@+id/navDaily"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@android:drawable/ic_menu_today"
+            app:tint="@color/icon_tint" />
+
+        <ImageView
+            android:id="@+id/navPeople"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@android:drawable/ic_menu_share"
+            app:tint="@color/icon_tint" />
+
+        <ImageView
+            android:id="@+id/navShield"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@android:drawable/ic_menu_upload"
+            app:tint="@color/icon_tint" />
+
+        <ImageView
+            android:id="@+id/navStats"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@android:drawable/ic_menu_sort_by_size"
+            app:tint="@color/icon_tint" />
+
+        <ImageView
+            android:id="@+id/navProfile"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@android:drawable/ic_menu_myplaces"
+            app:tint="@color/icon_tint" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
