@@ -231,7 +231,6 @@
             android:src="@android:drawable/ic_menu_myplaces"
             app:tint="@color/icon_tint" />
 
-
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
