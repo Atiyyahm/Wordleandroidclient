@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "598667406883",
+    "project_id": "wordle-5ab92",
+    "storage_bucket": "wordle-5ab92.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:598667406883:android:14748456ac976b2a7b8b96",
+        "android_client_info": {
+          "package_name": "vcmsa.projects.wordleandroidclient"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "598667406883-t8sc1r6cb53grc4ug64p981pkni99qoh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "vcmsa.projects.wordleandroidclient",
+            "certificate_hash": "3f92468651096662634e7df61db3862633371a2c"
+          }
+        },
+        {
+          "client_id": "598667406883-anfbkqb1i9kpmhf1vlpoa8p4je0o4f0c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBfl_2mQUjokiXJp7Kz-YTCZ0Cr5onCY4E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "598667406883-anfbkqb1i9kpmhf1vlpoa8p4je0o4f0c.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

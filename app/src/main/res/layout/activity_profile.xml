@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@drawable/bg_dashboard_gradient"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Header -->
+        <LinearLayout
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:background="@drawable/bg_section_card"
+            android:gravity="center_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/imgAvatar"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@drawable/ic_profile"
+                android:background="@drawable/bg_avatar_ring"
+                android:padding="10dp"
+                android:contentDescription="Avatar"/>
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_marginStart="12dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tvFullName"
+                    android:text="Your Name"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+                <TextView
+                    android:id="@+id/tvUsername"
+                    android:text="@username"
+                    android:textColor="#CFEAFF"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/btnEditHeader"
+                android:text="Edit"
+                android:textStyle="bold"
+                android:textColor="#8EE7FF"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:background="@drawable/bg_chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <!-- Rows -->
+        <LinearLayout
+            android:id="@+id/rowStats"
+            style="@style/WrRow"
+            android:layout_marginTop="16dp">
+            <ImageView style="@style/WrRowIcon" android:src="@drawable/ic_stats"/>
+            <TextView style="@style/WrRowText" android:text="Stats"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/rowBadges"
+            style="@style/WrRow">
+            <ImageView style="@style/WrRowIcon" android:src="@drawable/ic_badges"/>
+            <TextView style="@style/WrRowText" android:text="Badges"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/rowSettings"
+            style="@style/WrRow">
+            <ImageView style="@style/WrRowIcon" android:src="@drawable/ic_settings"/>
+            <TextView style="@style/WrRowText" android:text="Settings"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/rowEditProfile"
+            style="@style/WrRow">
+            <ImageView style="@style/WrRowIcon" android:src="@drawable/ic_edit"/>
+            <TextView style="@style/WrRowText" android:text="Edit Profile"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/rowLogout"
+            style="@style/WrRow">
+            <ImageView style="@style/WrRowIcon" android:src="@drawable/ic_logout"/>
+            <TextView style="@style/WrRowText" android:text="Logout"/>
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/bg_welcome_gradient" android:padding="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical" android:gravity="center">
+
+        <ImageView
+            android:id="@+id/imgLogo"
+            android:layout_width="220dp" android:layout_height="220dp"
+            android:src="@drawable/wordrush_logo" android:contentDescription="@string/app_name"/>
+
+        <TextView
+            android:id="@+id/tvWelcome"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/welcome_title" android:textStyle="bold"
+            android:textSize="28sp" android:textColor="@android:color/white"
+            android:layout_marginTop="16dp"/>
+
+        <Button
+            android:id="@+id/btnGetStarted"
+            android:layout_width="200dp" android:layout_height="56dp"
+            android:layout_marginTop="32dp"
+            android:background="@drawable/btn_primary_glow"
+            android:text="@string/get_started" android:textAllCaps="false"
+            android:textColor="@android:color/white" android:textStyle="bold"/>
+    </LinearLayout>
+</FrameLayout>

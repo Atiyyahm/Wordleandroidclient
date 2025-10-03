@@ -4,6 +4,7 @@
     <color name="white">#FFFFFFFF</color>
     <color name="grey">#FF3A3A3C</color>
     <color name="light_grey">#FF818384</color>
+    <color name="primary_mid">#FF6200EE</color>
     <color name="yellow">#FFB59F3B</color>
     <color name="green">#FF538D4E</color>
     <color name="transparent">#00000000</color>
@@ -19,4 +20,10 @@
     <color name="pink_multiplayer">#E7398D</color>
     <color name="yellow_daily">#FFD700</color>
     <color name="icon_tint">#FFD5D7DA</color>
+
+    <color name="wordrush_correct">#6AAA64</color>   <!-- green -->
+    <color name="wordrush_present">#C9B458</color>  <!-- yellow -->
+    <color name="wordrush_absent">#787C7E</color>   <!-- dark grey -->
+    <color name="wordrush_filled">#D3D6DA</color>   <!-- light grey -->
+    <color name="wordrush_empty">#FFFFFF</color>    <!-- white / default -->
 </resources>

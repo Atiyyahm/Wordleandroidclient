@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/bg_welcome_gradient">
+
+    <LinearLayout
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="24dp">
+
+        <ImageView
+            android:layout_width="64dp" android:layout_height="64dp"
+            android:layout_gravity="center_horizontal"
+            android:src="@drawable/wordrush_logo" android:contentDescription="@string/app_name"/>
+
+        <TextView
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="LOGIN" android:textStyle="bold"
+            android:textSize="22sp" android:textColor="@android:color/white"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp" android:layout_marginBottom="16dp"/>
+
+        <EditText
+            android:id="@+id/etEmail"
+            style="@style/WrInput"
+            android:inputType="textEmailAddress"
+            android:hint="Email"/>
+
+        <EditText
+            android:id="@+id/etPassword"
+            style="@style/WrInput"
+            android:inputType="textPassword"
+            android:hint="Password"/>
+
+        <ProgressBar
+            android:id="@+id/progress"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="48dp" android:layout_height="48dp"
+            android:layout_gravity="center_horizontal" android:visibility="gone"
+            android:layout_marginTop="8dp"/>
+
+        <Button
+            android:id="@+id/btnLogin"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/btn_pink_glow"
+            android:text="LOGIN" android:textAllCaps="true"
+            android:textStyle="bold" android:textColor="@android:color/white"/>
+
+        <Button
+            android:id="@+id/btnSignup"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/btn_outline_pink"
+            android:text="SIGNUP" android:textAllCaps="true"
+            android:textStyle="bold" android:textColor="#FF60C6"/>
+
+        <!-- Google SSO -->
+        <LinearLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center"
+            android:layout_marginTop="18dp">
+
+            <LinearLayout
+                android:id="@+id/btnGoogle"
+                android:layout_width="220dp" android:layout_height="48dp"
+                android:background="@drawable/btn_google"
+                android:gravity="center">
+
+                <ImageView
+                    android:layout_width="20dp" android:layout_height="20dp"
+                    android:src="@drawable/ic_google" android:tint="@android:color/black"/>
+                <TextView
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Continue with Google" android:textStyle="bold"
+                    android:textColor="@android:color/black" android:layout_marginStart="8dp"/>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

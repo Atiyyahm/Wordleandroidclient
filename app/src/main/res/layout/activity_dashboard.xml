@@ -1,179 +1,362 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/primary_dark"
-    tools:context=".DashboardActivity">
+    android:background="@drawable/bg_dashboard_gradient">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/clHeader"
+    <!-- Top app bar -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/topBar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="12dp"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_height="56dp"
+        android:background="@android:color/transparent"
+        app:title=""
+        app:contentInsetStartWithNavigation="0dp">
 
         <ImageView
-            android:id="@+id/imgLogo"
-            android:layout_width="80dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/wordrush_logo"
+            android:contentDescription="@string/app_name"
+            android:layout_gravity="start|center_vertical"/>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+
+        <ImageButton
+            android:id="@+id/btnAvatar"
+            android:layout_width="40dp"
             android:layout_height="40dp"
-            android:src="@drawable/ic_wordrush_logo"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            android:background="@android:color/transparent"
+            android:contentDescription="Profile"
+            app:srcCompat="@drawable/ic_profile"/>
+    </com.google.android.material.appbar.MaterialToolbar>
 
-        <ImageView
-            android:id="@+id/btnNotifications"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_notifications"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/btnSettings"
-            android:layout_marginEnd="16dp" />
-
-        <ImageView
-            android:id="@+id/btnSettings"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_settings"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <TextView
-        android:id="@+id/tvWelcome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Welcome Back Zayden"
-        android:textColor="@color/white"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:layout_marginTop="24dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/clHeader"
-        android:layout_marginStart="16dp" />
-
-    <TextView
-        android:id="@+id/tvStreak"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="🔥 6 Day Streak. Keep Going!"
-        android:textColor="@color/white"
-        android:textSize="16sp"
-        android:layout_marginTop="4dp"
-        app:layout_constraintStart_toStartOf="@id/tvWelcome"
-        app:layout_constraintTop_toBottomOf="@id/tvWelcome" />
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cvSpeedle"
-        android:layout_width="0dp"
-        android:layout_height="100dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="32dp"
-        android:layout_marginEnd="8dp"
-        app:cardBackgroundColor="@color/green_speedle"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="4dp"
-        app:layout_constraintEnd_toStartOf="@+id/guideline"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvStreak" >
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cvLeaderboard"
-        android:layout_width="0dp"
-        android:layout_height="100dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="8dp"
-        app:cardBackgroundColor="@color/blue_leaderboard"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="4dp"
-        app:layout_constraintEnd_toStartOf="@+id/guideline"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cvSpeedle" >
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cvMultiplayer"
-        android:layout_width="0dp"
-        android:layout_height="100dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="8dp"
-        app:cardBackgroundColor="@color/pink_multiplayer"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="4dp"
-        app:layout_constraintEnd_toStartOf="@+id/guideline"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cvLeaderboard" >
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cvDailyWordle"
-        android:layout_width="0dp"
-        android:layout_height="216dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="16dp"
-        app:cardBackgroundColor="@color/yellow_daily"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="4dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/guideline"
-        app:layout_constraintTop_toTopOf="@id/cvSpeedle" >
-    </androidx.cardview.widget.CardView>
-
-    <Button
-        android:id="@+id/btnSpinMe"
-        style="@style/Widget.AppCompat.Button.Borderless"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Spin Me"
-        app:layout_constraintEnd_toEndOf="@id/cvDailyWordle"
-        app:layout_constraintStart_toStartOf="@id/cvDailyWordle"
-        app:layout_constraintTop_toBottomOf="@id/cvDailyWordle"
-        android:layout_marginTop="8dp" />
-
-    <Button
-        android:id="@+id/btnHowToPlay"
-        style="@style/Widget.AppCompat.Button.Borderless"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="How To Play"
-        app:layout_constraintEnd_toEndOf="@id/cvDailyWordle"
-        app:layout_constraintStart_toStartOf="@id/cvDailyWordle"
-        app:layout_constraintTop_toBottomOf="@id/btnSpinMe" />
-
-    <Button
-        android:id="@+id/btnBadges"
-        style="@style/Widget.AppCompat.Button.Borderless"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Badges"
-        app:layout_constraintEnd_toEndOf="@id/cvDailyWordle"
-        app:layout_constraintStart_toStartOf="@id/cvDailyWordle"
-        app:layout_constraintTop_toBottomOf="@id/btnHowToPlay" />
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.5" />
-
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNavigationView"
+    <!-- Content -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/black"
-        app:menu="@menu/bottom_nav_menu"
-        app:itemIconTint="@color/white"
-        app:itemTextColor="@color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:layout_height="match_parent"
+        android:layout_marginTop="56dp"
+        android:layout_marginBottom="80dp"
+        android:padding="20dp">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- Greeting + streak -->
+            <TextView
+                android:id="@+id/tvGreeting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Welcome back, Player"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="24sp"/>
+
+            <TextView
+                android:id="@+id/chipStreak"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:background="@drawable/bg_chip"
+                android:text="Start a streak today"
+                android:textColor="#FFD08A"
+                android:textStyle="bold"/>
+
+            <!-- Quick actions row (horizontal) -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fillViewport="false"
+                android:layout_marginTop="16dp">
+
+                <LinearLayout
+                    android:id="@+id/quickActionsRow"
+                    android:orientation="horizontal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <!-- Each quick action is a vertical icon+label -->
+                    <LinearLayout
+                        android:id="@+id/qaSpeedle"
+                        android:orientation="vertical"
+                        android:layout_width="88dp"
+                        android:layout_height="wrap_content"
+                        android:padding="8dp">
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:src="@drawable/ic_speedlemode"
+                            android:contentDescription="Speedle"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Speedle"
+                            android:textColor="@android:color/white"
+                            android:layout_marginTop="4dp"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/qaMultiplayer"
+                        android:orientation="vertical"
+                        android:layout_width="88dp"
+                        android:layout_height="wrap_content"
+                        android:padding="8dp">
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:src="@drawable/ic_multiplayer"
+                            android:contentDescription="Multiplayer"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Multiplayer"
+                            android:textColor="@android:color/white"
+                            android:layout_marginTop="4dp"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/qaLeaderboard"
+                        android:orientation="vertical"
+                        android:layout_width="88dp"
+                        android:layout_height="wrap_content"
+                        android:padding="8dp">
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:src="@drawable/ic_leaderboard"
+                            android:contentDescription="Leaderboard"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Leaderboard"
+                            android:textColor="@android:color/white"
+                            android:layout_marginTop="4dp"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/qaStats"
+                        android:orientation="vertical"
+                        android:layout_width="88dp"
+                        android:layout_height="wrap_content"
+                        android:padding="8dp">
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:src="@drawable/ic_stats"
+                            android:contentDescription="Stats"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Stats"
+                            android:textColor="@android:color/white"
+                            android:layout_marginTop="4dp"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/qaHowTo"
+                        android:orientation="vertical"
+                        android:layout_width="88dp"
+                        android:layout_height="wrap_content"
+                        android:padding="8dp">
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:src="@drawable/ic_help"
+                            android:contentDescription="How to Play"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="How to Play"
+                            android:textColor="@android:color/white"
+                            android:layout_marginTop="4dp"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+            </HorizontalScrollView>
+
+            <!-- Daily WordRush (primary card) -->
+            <LinearLayout
+                android:id="@+id/cardDaily"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_card_primary"
+                android:padding="16dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Daily WordRush"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp"/>
+
+                <TextView
+                    android:id="@+id/tvDailyCountdown"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Resets in 00:00:00"
+                    android:textColor="#CFEAFF"
+                    android:layout_marginTop="6dp"/>
+
+                <TextView
+                    android:id="@+id/tvDailySub"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Play today’s puzzle"
+                    android:textColor="#EAF7FF"
+                    android:layout_marginTop="6dp"/>
+            </LinearLayout>
+
+            <!-- Speedle (secondary card with selector) -->
+            <LinearLayout
+                android:id="@+id/cardSpeedle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_card_secondary"
+                android:padding="16dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Speedle Mode"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:textSize="18sp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Beat the clock!"
+                    android:textColor="#EAF7FF"
+                    android:layout_marginTop="4dp"/>
+
+                <RadioGroup
+                    android:id="@+id/rgSpeedle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="10dp">
+
+                    <RadioButton
+                        android:id="@+id/rb60"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="60s"
+                        android:textColor="@android:color/white"/>
+
+                    <RadioButton
+                        android:id="@+id/rb90"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="90s"
+                        android:layout_marginStart="16dp"
+                        android:textColor="@android:color/white"/>
+
+                    <RadioButton
+                        android:id="@+id/rb120"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="120s"
+                        android:layout_marginStart="16dp"
+                        android:textColor="@android:color/white"/>
+                </RadioGroup>
+            </LinearLayout>
+
+            <!-- Multiplayer (secondary card) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_card_tertiary"
+                android:padding="16dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Multiplayer"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:textSize="18sp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="10dp">
+
+                    <Button
+                        android:id="@+id/btnFriend"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/btn_outline_pink"
+                        android:text="Play with Friend"
+                        android:textAllCaps="false"
+                        android:textColor="#FF60C6"/>
+
+                    <Space
+                        android:layout_width="12dp"
+                        android:layout_height="1dp"/>
+
+                    <Button
+                        android:id="@+id/btnAI"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/btn_primary_glow"
+                        android:text="Play vs AI"
+                        android:textAllCaps="false"
+                        android:textColor="@android:color/white"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Learn & Rewards pills -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="18dp">
+
+                <TextView
+                    android:id="@+id/pillHowTo"
+                    style="@style/WrPill"
+                    android:text="How to Play"/>
+
+                <TextView
+                    android:id="@+id/pillBadges"
+                    style="@style/WrPill"
+                    android:text="Badges"
+                    android:layout_marginStart="8dp"/>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Bottom Navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:layout_gravity="bottom"
+        android:background="@drawable/bg_nav_blur"
+        app:itemIconTint="@color/nav_item"
+        app:itemTextColor="@color/nav_item"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_nav_menu"  />
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

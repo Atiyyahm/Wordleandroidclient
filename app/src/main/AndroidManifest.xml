@@ -11,8 +11,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Wordleandroidclient"
         android:usesCleartextTraffic="true">
+
+        <!-- Launcher: Welcome first, it will route to Dashboard if already signed in -->
         <activity
-            android:name="vcmsa.projects.wordleandroidclient.DashboardActivity"
+            android:name="vcmsa.projects.wordleandroidclient.WelcomeActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
@@ -21,15 +23,47 @@
             </intent-filter>
         </activity>
 
+        <!-- Core game surface -->
         <activity
             android:name="vcmsa.projects.wordleandroidclient.MainActivity"
-            android:exported="false">
-        </activity>
+            android:exported="false" />
 
+        <!-- Auth & entry -->
+        <activity
+            android:name="vcmsa.projects.wordleandroidclient.EntryChoiceActivity"
+            android:exported="false" />
+        <activity
+            android:name="vcmsa.projects.wordleandroidclient.LoginActivity"
+            android:exported="false" />
+        <activity
+            android:name="vcmsa.projects.wordleandroidclient.RegisterActivity"
+            android:exported="false" />
+        <activity
+            android:name="vcmsa.projects.wordleandroidclient.DashboardActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
+
+        <!-- Profile, Stats, etc. -->
+        <activity
+            android:name="vcmsa.projects.wordleandroidclient.ProfileActivity"
+            android:exported="false" />
         <activity
             android:name="vcmsa.projects.wordleandroidclient.StatsActivity"
             android:exported="false"
             android:parentActivityName="vcmsa.projects.wordleandroidclient.DashboardActivity" />
+        <activity
+            android:name="vcmsa.projects.wordleandroidclient.BadgesActivity"
+            android:exported="false" />
+
+        <!-- Leaderboard -->
+        <activity
+            android:name="vcmsa.projects.wordleandroidclient.LeaderboardActivity"
+            android:exported="false" />
+
+        <!-- Multiplayer waiting room  -->
+        <activity
+            android:name="vcmsa.projects.wordleandroidclient.multiplayer.WaitingRoomActivity"
+            android:exported="false" />
 
     </application>
 </manifest>

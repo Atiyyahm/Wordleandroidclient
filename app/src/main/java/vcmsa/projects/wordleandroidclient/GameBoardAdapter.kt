@@ -1,58 +1,109 @@
 package vcmsa.projects.wordleandroidclient
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 
-// Assuming a ViewHolder structure for a single tile (5x6 grid = 30 tiles total)
+class GameBoardAdapter(
+    private var letters: List<String>,
+    private var states: List<TileState>
+) : RecyclerView.Adapter<GameBoardAdapter.LetterBlockViewHolder>() {
 
-// We need a way to track the letter and its state (color: green, yellow, gray)
-// For simplicity right now, we'll only pass strings, but you will likely need a data class later.
-class GameBoardAdapter(private var letters: List<String>) :
-    RecyclerView.Adapter<GameBoardAdapter.LetterBlockViewHolder>() {
+    /** Number of columns in a row (used for stagger timing). Defaults to 5. */
+    var wordLength: Int = 5
 
-    // --- ViewHolder Class ---
+    /** Remember which positions we’ve already animated (prevents repeat flips). */
+    private val animatedPositions = mutableSetOf<Int>()
+
     inner class LetterBlockViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        // Assuming your item_letter_block.xml contains a TextView with ID tvLetter
-        val letterTextView: TextView = itemView.findViewById(R.id.tvLetterBlock)
-        val blockView: View = itemView // Or a CardView/ConstraintLayout acting as the block
+        private val letterTextView: TextView = itemView.findViewById(R.id.tvLetterBlock)
+        private val blockCard: CardView = itemView as CardView
 
-        fun bind(letter: String) {
+        fun bindAt(position: Int, letter: String, state: TileState) {
             letterTextView.text = letter
 
-            // FUTURE: This is where you would set the background color based on the letter state
-            // Example:
-            // when (state) {
-            //     LetterState.CORRECT -> blockView.setBackgroundColor(Color.GREEN)
-            //     ...
-            // }
+            val (bgColor, fgColor) = when (state) {
+                TileState.CORRECT -> Color.parseColor("#6AAA64") to Color.WHITE  // green
+                TileState.PRESENT -> Color.parseColor("#C9B458") to Color.WHITE  // yellow
+                TileState.ABSENT  -> Color.parseColor("#787C7E") to Color.WHITE  // gray
+                TileState.FILLED  -> Color.WHITE to Color.BLACK                   // typed but not submitted
+                TileState.EMPTY   -> Color.parseColor("#E6E6E6") to Color.DKGRAY // empty
+            }
+
+            // If this tile just transitioned to a final state (G/Y/B), play flip once
+            val isFinal = state == TileState.CORRECT || state == TileState.PRESENT || state == TileState.ABSENT
+            if (isFinal && animatedPositions.add(position)) {
+                // Stagger by column index: 0,1,2,3,4 → 0ms,70ms,140ms,210ms,280ms
+                val colIndex = if (wordLength > 0) position % wordLength else 0
+                val delay = 70L * colIndex
+                flipReveal(blockCard, letterTextView, bgColor, fgColor, delay)
+            } else {
+                // No animation (or already animated) — just ensure colors are correct
+                blockCard.setCardBackgroundColor(bgColor)
+                letterTextView.setTextColor(fgColor)
+            }
+        }
+
+        private fun flipReveal(
+            card: CardView,
+            tv: TextView,
+            bgColor: Int,
+            fgColor: Int,
+            delay: Long
+        ) {
+            // Simple two-step "flip": scaleY down, swap color, scaleY up
+            card.animate()
+                .setStartDelay(delay)
+                .scaleY(0f)
+                .setDuration(110L)
+                .withEndAction {
+                    card.setCardBackgroundColor(bgColor)
+                    tv.setTextColor(fgColor)
+                    card.animate()
+                        .scaleY(1f)
+                        .setDuration(110L)
+                        .start()
+                }
+                .start()
         }
     }
 
-    // --- Adapter Overrides ---
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LetterBlockViewHolder {
-        // You MUST have a layout file named R.layout.item_letter_block
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_letter_block, parent, false)
+            .inflate(R.layout.item_letter_block, parent, false) as CardView
         return LetterBlockViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: LetterBlockViewHolder, position: Int) {
-        holder.bind(letters[position])
+        holder.bindAt(position, letters[position], states[position])
     }
 
     override fun getItemCount(): Int = letters.size
 
-    // --- *** REQUIRED NEW FUNCTION FOR DYNAMIC UPDATES *** ---
-    /**
-     * Updates the data set and notifies the RecyclerView to redraw the grid.
-     */
+    /** Update just the letters . */
     fun updateLetters(newLetters: List<String>) {
-        this.letters = newLetters
-        // Tells the RecyclerView to redraw all 30 tiles based on the new data list
+        val sizeChanged = newLetters.size != letters.size
+        letters = newLetters
+        if (sizeChanged) animatedPositions.clear() // board reset
         notifyDataSetChanged()
+    }
+
+    /** Update states without forcing animations (used for non-reveal changes). */
+    fun updateStates(newStates: List<TileState>) {
+        val sizeChanged = newStates.size != states.size
+        states = newStates
+        if (sizeChanged) animatedPositions.clear() // board reset
+        notifyDataSetChanged()
+    }
+
+
+    fun revealRow(startIndex: Int, len: Int = wordLength) {
+        // Allow this row to animate even if some items were previously bound
+        for (i in 0 until len) animatedPositions.remove(startIndex + i)
+        notifyItemRangeChanged(startIndex, len)
     }
 }

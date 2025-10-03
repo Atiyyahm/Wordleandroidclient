@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/bg_welcome_gradient" android:padding="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical" android:gravity="center">
+
+        <ImageView
+            android:layout_width="200dp" android:layout_height="200dp"
+            android:src="@drawable/wordrush_logo" android:contentDescription="@string/app_name"/>
+
+        <TextView
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="WordRush" android:textStyle="bold" android:textSize="26sp"
+            android:textColor="@android:color/white" android:layout_marginTop="8dp"/>
+
+        <Button
+            android:id="@+id/btnLogin"
+            android:layout_width="220dp" android:layout_height="56dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/btn_pink_glow"
+            android:text="LOGIN" android:textAllCaps="true"
+            android:textStyle="bold" android:textColor="@android:color/white"/>
+
+        <Button
+            android:id="@+id/btnSignup"
+            android:layout_width="220dp" android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/btn_outline_pink"
+            android:text="SIGNUP" android:textAllCaps="true"
+            android:textStyle="bold" android:textColor="#FF60C6"/>
+    </LinearLayout>
+</FrameLayout>

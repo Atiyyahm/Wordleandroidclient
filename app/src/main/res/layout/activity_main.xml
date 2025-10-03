@@ -1,29 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/primary_dark"
-    tools:context="vcmsa.projects.wordleandroidclient.MainActivity">
+    tools:context=".MainActivity">
 
-
+    <!-- Top bar -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:padding="16dp"
         android:gravity="center_vertical"
+        android:background="@drawable/bg_topbar"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <ImageView
+        <ImageButton
             android:id="@+id/btnBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@android:drawable/ic_media_previous"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/back"
+            android:src="@drawable/ic_back_chevron"
             app:tint="@color/icon_tint" />
 
         <TextView
@@ -31,206 +35,191 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Daily WordRush"
+            android:text="@string/daily_wordrush"
             android:textColor="@color/gold"
-            android:textSize="24sp"
+            android:textSize="22sp"
             android:textStyle="bold"
             android:gravity="center" />
-        <ImageView
-            android:id="@+id/btnSettings"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:src="@android:drawable/ic_menu_edit"
-            app:tint="@color/icon_tint" />
-        <ImageView
+
+        <ImageButton
             android:id="@+id/btnHelp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@android:drawable/ic_menu_help"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/help"
+            android:src="@drawable/ic_help"
             app:tint="@color/icon_tint" />
     </LinearLayout>
+    <vcmsa.projects.wordleandroidclient.multiplayer.OpponentProgressView
+        android:id="@+id/opponentProgress"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/topBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+    <!-- COUNTDOWN overlay (Speedle: shows 3..2..1) -->
+    <TextView
+        android:id="@+id/tvCountdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="48sp"
+        android:textColor="@android:color/white"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="48dp"
+        tools:text="3" />
 
-    <!-- Game Board -->
+    <!-- RUNNING TIMER (Speedle) -->
+    <TextView
+        android:id="@+id/tvTimer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:textColor="@android:color/white"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/topBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_margin="8dp"
+        tools:text="⏱ 90s" />
+
+    <!-- Game board -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvGameBoard"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="32dp"
-        android:layout_marginBottom="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:clipToPadding="false"
         app:layout_constraintTop_toBottomOf="@id/topBar"
-        app:layout_constraintBottom_toTopOf="@id/llPowerups"
+        app:layout_constraintBottom_toTopOf="@id/powerupsRow"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:listitem="@layout/item_letter_block" />
 
-    <!-- Power-ups -->
+    <!-- Power-ups row -->
     <LinearLayout
-        android:id="@+id/llPowerups"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@id/llKeyboard"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <ImageView
-            android:id="@+id/btnPowerup1"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_margin="8dp"
-            android:src="@android:drawable/ic_dialog_info"
-            app:tint="@color/accent" />
-
-        <ImageView
-            android:id="@+id/btnPowerup2"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_margin="8dp"
-            android:src="@android:drawable/ic_dialog_email"
-            app:tint="@color/accent" />
-
-        <ImageView
-            android:id="@+id/btnPowerup3"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_margin="8dp"
-            android:src="@android:drawable/ic_menu_rotate"
-            app:tint="@color/accent" />
-
-    </LinearLayout>
-
-    <!-- Keyboard -->
-    <LinearLayout
-        android:id="@+id/llKeyboard"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@id/bottomNav"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <!-- Keyboard Row 1 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <Button android:id="@+id/btnQ" style="@style/KeyboardKey" android:text="Q" />
-            <Button android:id="@+id/btnW" style="@style/KeyboardKey" android:text="W" />
-            <Button android:id="@+id/btnE" style="@style/KeyboardKey" android:text="E" />
-            <Button android:id="@+id/btnR" style="@style/KeyboardKey" android:text="R" />
-            <Button android:id="@+id/btnT" style="@style/KeyboardKey" android:text="T" />
-            <Button android:id="@+id/btnY" style="@style/KeyboardKey" android:text="Y" />
-            <Button android:id="@+id/btnU" style="@style/KeyboardKey" android:text="U" />
-            <Button android:id="@+id/btnI" style="@style/KeyboardKey" android:text="I" />
-            <Button android:id="@+id/btnO" style="@style/KeyboardKey" android:text="O" />
-            <Button android:id="@+id/btnP" style="@style/KeyboardKey" android:text="P" />
-        </LinearLayout>
-
-
-        <!-- Keyboard Row 2 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <Button android:id="@+id/btnA" style="@style/KeyboardKey" android:text="A" />
-            <Button android:id="@+id/btnS" style="@style/KeyboardKey" android:text="S" />
-            <Button android:id="@+id/btnD" style="@style/KeyboardKey" android:text="D" />
-            <Button android:id="@+id/btnF" style="@style/KeyboardKey" android:text="F" />
-            <Button android:id="@+id/btnG" style="@style/KeyboardKey" android:text="G" />
-            <Button android:id="@+id/btnH" style="@style/KeyboardKey" android:text="H" />
-            <Button android:id="@+id/btnJ" style="@style/KeyboardKey" android:text="J" />
-            <Button android:id="@+id/btnK" style="@style/KeyboardKey" android:text="K" />
-            <Button android:id="@+id/btnL" style="@style/KeyboardKey" android:text="L" />
-        </LinearLayout>
-
-
-        <!-- Keyboard Row 3 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <Button android:id="@+id/btnEnter" style="@style/KeyboardKey" android:text="ENTER" android:layout_weight="1.5" />
-            <Button android:id="@+id/btnZ" style="@style/KeyboardKey" android:text="Z" />
-            <Button android:id="@+id/btnX" style="@style/KeyboardKey" android:text="X" />
-            <Button android:id="@+id/btnC" style="@style/KeyboardKey" android:text="C" />
-            <Button android:id="@+id/btnV" style="@style/KeyboardKey" android:text="V" />
-            <Button android:id="@+id/btnB" style="@style/KeyboardKey" android:text="B" />
-            <Button android:id="@+id/btnN" style="@style/KeyboardKey" android:text="N" />
-            <Button android:id="@+id/btnM" style="@style/KeyboardKey" android:text="M" />
-            <Button android:id="@+id/btnBackspace" style="@style/KeyboardKey" android:text="BACK" android:layout_weight="1.5" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <!-- Bottom Navigation Bar -->
-    <LinearLayout
-        android:id="@+id/bottomNav"
+        android:id="@+id/powerupsRow"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
         android:padding="8dp"
-        android:background="@color/primary_variant"
+        app:layout_constraintBottom_toTopOf="@id/keyboard"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Active: Definition -->
+        <ImageButton
+            android:id="@+id/btnPowerupDefinition"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_margin="8dp"
+            android:background="@drawable/bg_power_chip_active"
+            android:contentDescription="@string/definition_hint"
+            app:srcCompat="@drawable/ic_book_hint"
+            app:tint="@color/icon_tint" />
+
+        <!-- Disabled placeholders -->
+        <ImageButton
+            android:id="@+id/btnPowerup2Disabled"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_margin="8dp"
+            android:background="@drawable/bg_power_chip_disabled"
+            android:contentDescription="@string/powerup_locked"
+            app:srcCompat="@drawable/ic_powerup_placeholder"
+            app:tint="@color/icon_tint" />
+
+        <ImageButton
+            android:id="@+id/btnPowerup3Disabled"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_margin="8dp"
+            android:background="@drawable/bg_power_chip_disabled"
+            android:contentDescription="@string/powerup_locked"
+            app:srcCompat="@drawable/ic_powerup_placeholder"
+            app:tint="@color/icon_tint" />
+    </LinearLayout>
+
+    <!-- Keyboard -->
+    <LinearLayout
+        android:id="@+id/keyboard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <ImageView
-            android:id="@+id/navHome"
-            android:layout_width="0dp"
+        <!-- Row 1 -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:src="@android:drawable/ic_menu_slideshow"
-            app:tint="@color/accent" />
+            android:gravity="center"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp">
+            <Button android:id="@+id/btnQ" style="@style/KeyboardKey" android:text="Q"/>
+            <Button android:id="@+id/btnW" style="@style/KeyboardKey" android:text="W"/>
+            <Button android:id="@+id/btnE" style="@style/KeyboardKey" android:text="E"/>
+            <Button android:id="@+id/btnR" style="@style/KeyboardKey" android:text="R"/>
+            <Button android:id="@+id/btnT" style="@style/KeyboardKey" android:text="T"/>
+            <Button android:id="@+id/btnY" style="@style/KeyboardKey" android:text="Y"/>
+            <Button android:id="@+id/btnU" style="@style/KeyboardKey" android:text="U"/>
+            <Button android:id="@+id/btnI" style="@style/KeyboardKey" android:text="I"/>
+            <Button android:id="@+id/btnO" style="@style/KeyboardKey" android:text="O"/>
+            <Button android:id="@+id/btnP" style="@style/KeyboardKey" android:text="P"/>
+        </LinearLayout>
 
-        <ImageView
-            android:id="@+id/navDaily"
-            android:layout_width="0dp"
+        <!-- Row 2 -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:src="@android:drawable/ic_menu_today"
-            app:tint="@color/icon_tint" />
+            android:gravity="center"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp">
+            <Button android:id="@+id/btnA" style="@style/KeyboardKey" android:text="A"/>
+            <Button android:id="@+id/btnS" style="@style/KeyboardKey" android:text="S"/>
+            <Button android:id="@+id/btnD" style="@style/KeyboardKey" android:text="D"/>
+            <Button android:id="@+id/btnF" style="@style/KeyboardKey" android:text="F"/>
+            <Button android:id="@+id/btnG" style="@style/KeyboardKey" android:text="G"/>
+            <Button android:id="@+id/btnH" style="@style/KeyboardKey" android:text="H"/>
+            <Button android:id="@+id/btnJ" style="@style/KeyboardKey" android:text="J"/>
+            <Button android:id="@+id/btnK" style="@style/KeyboardKey" android:text="K"/>
+            <Button android:id="@+id/btnL" style="@style/KeyboardKey" android:text="L"/>
+        </LinearLayout>
 
-        <ImageView
-            android:id="@+id/navPeople"
-            android:layout_width="0dp"
+        <!-- Row 3 -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:src="@android:drawable/ic_menu_share"
-            app:tint="@color/icon_tint" />
-
-        <ImageView
-            android:id="@+id/navShield"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:src="@android:drawable/ic_menu_upload"
-            app:tint="@color/icon_tint" />
-
-        <ImageView
-            android:id="@+id/navStats"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:src="@android:drawable/ic_menu_sort_by_size"
-            app:tint="@color/icon_tint" />
-
-        <ImageView
-            android:id="@+id/navProfile"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:src="@android:drawable/ic_menu_myplaces"
-            app:tint="@color/icon_tint" />
-
+            android:gravity="center"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp">
+            <Button android:id="@+id/btnEnter" style="@style/KeyboardKeyWide" android:text="@string/enter"/>
+            <Button android:id="@+id/btnZ" style="@style/KeyboardKey" android:text="Z"/>
+            <Button android:id="@+id/btnX" style="@style/KeyboardKey" android:text="X"/>
+            <Button android:id="@+id/btnC" style="@style/KeyboardKey" android:text="C"/>
+            <Button android:id="@+id/btnV" style="@style/KeyboardKey" android:text="V"/>
+            <Button android:id="@+id/btnB" style="@style/KeyboardKey" android:text="B"/>
+            <Button android:id="@+id/btnN" style="@style/KeyboardKey" android:text="N"/>
+            <Button android:id="@+id/btnM" style="@style/KeyboardKey" android:text="M"/>
+            <Button android:id="@+id/btnBackspace" style="@style/KeyboardKeyWide" android:text="@string/back"/>
+        </LinearLayout>
     </LinearLayout>
+
+    <!-- Confetti overlay (top of everything) -->
+    <nl.dionsegijn.konfetti.xml.KonfettiView
+        android:id="@+id/konfettiView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

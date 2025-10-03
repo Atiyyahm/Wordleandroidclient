@@ -1,102 +1,387 @@
 package vcmsa.projects.wordleandroidclient
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button // Necessary for referencing the keyboard buttons
+import android.widget.Button
+import android.widget.ImageButton
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import vcmsa.projects.wordleandroidclient.api.RetrofitClient
-import vcmsa.projects.wordleandroidclient.api.data.WordleDataService
-import vcmsa.projects.wordleandroidclient.WordleViewModel
-import vcmsa.projects.wordleandroidclient.WordleViewModelFactory
+import vcmsa.projects.wordleandroidclient.multiplayer.AiDifficulty
+import vcmsa.projects.wordleandroidclient.multiplayer.AiOpponent
+import vcmsa.projects.wordleandroidclient.multiplayer.LocalWordJudge
+import vcmsa.projects.wordleandroidclient.multiplayer.MultiplayerRepository
+import vcmsa.projects.wordleandroidclient.multiplayer.OpponentProgress
+import vcmsa.projects.wordleandroidclient.multiplayer.OpponentProgressView
+import com.google.firebase.auth.FirebaseAuth
+import java.util.UUID
 
-/**
- * MainActivity is the primary Game Screen, hosting the RecyclerView and the Keyboard.
- */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var viewModel: WordleViewModel
+
     private lateinit var gameBoardRecyclerView: RecyclerView
     private lateinit var gameBoardAdapter: GameBoardAdapter
 
+    private lateinit var btnEnter: Button
+    private lateinit var btnBackspace: Button
+    private lateinit var btnPowerupDefinition: ImageButton
+    private var opponentLoop: AiOpponent? = null
+    private var friendEventsJob: Job? = null
+
+    private var playMode: String = "DAILY"
+
+    // Friends MP extras
+    private var roomCode: String? = null
+    private var targetWord: String? = null
+
+    // Shared opponent view
+    private var opponentView: OpponentProgressView? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Loads activity_main.xml which contains rvGameBoard, llKeyboard, etc.
         setContentView(R.layout.activity_main)
 
-        // 1. Initialize dependencies: API Service, Data Service, and ViewModel
-        val api = RetrofitClient.apiService
-        val dataService = WordleDataService(api)
-        // Use the factory to create the ViewModel with the required dependency
-        val factory = WordleViewModelFactory(dataService)
+        // --- ViewModel (injecting applicationContext via factory) ---
+        val factory = WordleViewModelFactory(
+            appContext = applicationContext,
+            wordApi = RetrofitClient.wordService,
+            speedleApi = RetrofitClient.speedleService
+        )
         viewModel = ViewModelProvider(this, factory)[WordleViewModel::class.java]
 
-        // 2. Setup Game Board (RecyclerView)
+        // --- Layout refs ---
+        opponentView = findViewById(R.id.opponentProgress)
+        btnEnter = findViewById(R.id.btnEnter)
+        btnBackspace = findViewById(R.id.btnBackspace)
+        btnPowerupDefinition = findViewById(R.id.btnPowerupDefinition)
+
+        // --- RecyclerView (5 columns initially; will still look fine for 3–7) ---
         gameBoardRecyclerView = findViewById(R.id.rvGameBoard)
-
-        // Initialize the adapter with the ViewModel's initial state (30 empty strings)
-        gameBoardAdapter = GameBoardAdapter(viewModel.boardLetters.value)
-
-        // Setup the RecyclerView as a 5-column grid (5 letters wide)
+        gameBoardAdapter = GameBoardAdapter(
+            letters = viewModel.boardLetters.value,
+            states  = viewModel.boardStates.value
+        )
         gameBoardRecyclerView.layoutManager = GridLayoutManager(this, 5)
         gameBoardRecyclerView.adapter = gameBoardAdapter
 
-        // 3. Observe the ViewModel's state (Reactive UI update)
-        // Any change to viewModel.boardLetters triggers this block
+        // --- Observe board updates ---
         lifecycleScope.launch {
             viewModel.boardLetters.collect { letters ->
-                // This updates the data list inside the adapter and redraws the tiles
                 gameBoardAdapter.updateLetters(letters)
-                Log.d("Wordle", "Board successfully updated with ${letters.size} tiles.")
+                Log.d("WordRush", "Board letters updated: ${letters.size}")
+            }
+        }
+        lifecycleScope.launch {
+            viewModel.boardStates.collect { states ->
+                gameBoardAdapter.updateStates(states)
             }
         }
 
-        // 4. Setup Keyboard Listeners
+        // --- End-of-game summary dialogs ---
+        lifecycleScope.launch {
+            viewModel.summary.collect { summary ->
+                if (summary != null) {
+                    if (viewModel.mode.value == GameMode.DAILY) {
+                        showDailyEndDialog(summary)
+                    } else {
+                        showEndSummaryDialog(summary)
+                    }
+                }
+            }
+        }
+        lifecycleScope.launch {
+            viewModel.gameState.collect { state ->
+                when (state) {
+                    GameState.WON  -> StatsManager.recordGame(applicationContext, won = true)
+                    GameState.LOST -> StatsManager.recordGame(applicationContext, won = false)
+                    else -> Unit
+                }
+            }
+        }
+
+        // --- Toasts for user messages ---
+        lifecycleScope.launch {
+            viewModel.userMessage.collect { msg ->
+                if (!msg.isNullOrBlank()) {
+                    Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        // --- Keyboard wiring (default listeners; may be overridden in MP handlers) ---
         setupKeyboardListeners()
 
-        // 5. Start the game by loading the daily word (triggers API call)
+        // Disable ENTER while a request is in flight (server modes)
         lifecycleScope.launch {
-            viewModel.loadDailyWord()
+            viewModel.isSubmitting.collect { busy ->
+                btnEnter.isEnabled = !busy
+            }
+        }
+
+        // --- Power-up: Definition (Daily only) ---
+        btnPowerupDefinition.setOnClickListener { viewModel.revealDefinitionHint() }
+        lifecycleScope.launch {
+            viewModel.hintMessage.collect { msg ->
+                if (msg != null) {
+                    androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
+                        .setTitle("Hint: Definition")
+                        .setMessage(msg)
+                        .setPositiveButton("OK") { d, _ -> d.dismiss() }
+                        .show()
+                    viewModel.clearHint()
+                }
+            }
+        }
+
+        // --- Decide Mode from Intent Extras ---
+        playMode = intent.getStringExtra("mode") ?: "DAILY"
+        when (playMode) {
+            "SPEEDLE" -> {
+                val seconds = intent.getIntExtra("seconds", 90)
+                startSpeedle(seconds)
+                opponentView?.visibility = android.view.View.GONE
+            }
+            "AI_MULTIPLAYER" -> {
+                opponentView?.visibility = android.view.View.VISIBLE
+                startAiMultiplayer()
+            }
+            "FRIENDS_MULTIPLAYER" -> {
+                opponentView?.visibility = android.view.View.VISIBLE
+                roomCode   = intent.getStringExtra("roomCode")
+                targetWord = intent.getStringExtra("targetWord")
+                if (roomCode.isNullOrBlank() || targetWord.isNullOrBlank()) {
+                    Toast.makeText(this, "Missing multiplayer data", Toast.LENGTH_SHORT).show()
+                    finish(); return
+                }
+                startFriendsMultiplayer(roomCode!!, targetWord!!)
+            }
+            else -> {
+                // DAILY
+                opponentView?.visibility = android.view.View.GONE
+                lifecycleScope.launch {
+                    viewModel.setModeDaily()
+                    viewModel.loadDailyWord()
+                }
+            }
         }
     }
 
-    /**
-     * Attaches click listeners to all letter keys and special keys defined in activity_main.xml.
-     * This links the View (Button press) to the Logic (ViewModel function call).
-     */
+    // -------------------------
+    // MODE HANDLERS
+    // -------------------------
+
+    private fun startSpeedle(seconds: Int) {
+        viewModel.startSpeedleSession(seconds)
+    }
+
+    /** On-device AI race (same word, first to solve). */
+    private fun startAiMultiplayer() {
+        // pick a local target (5 letters for v1)
+        val words = try {
+            assets.open("wordlist_en_5.txt")
+                .bufferedReader().readLines()
+                .map { it.trim().uppercase() }.filter { it.length == 5 }
+        } catch (_: Exception) { emptyList() }
+        val localTarget = if (words.isNotEmpty()) words.random() else "CRANE"
+
+        // prepare local board
+        lifecycleScope.launch {
+            viewModel.setModeDaily()
+            viewModel.resetBoard(5)
+        }
+
+        // opponent widget initial state
+        opponentView?.bind(OpponentProgress(status = "Ready", row = 0))
+
+        // start AI loop
+        val diffName = intent.getStringExtra("aiDifficulty") ?: "MEDIUM"
+        val diff = AiDifficulty.valueOf(diffName)
+        val ai = AiOpponent(
+            appContext = applicationContext,
+            scope = lifecycleScope,
+            difficulty = diff,
+            targetWord = localTarget,
+            wordLength = 5,
+            onProgress = { guess, fb, row ->
+                opponentView?.bind(
+                    OpponentProgress(
+                        lastGuess = guess, lastFeedback = fb, row = row, status = "Thinking…"
+                    )
+                )
+                if (fb.all { it == "G" } && viewModel.gameState.value == GameState.PLAYING) {
+                    androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle("AI wins 🧠")
+                        .setMessage("The word was $localTarget.")
+                        .setPositiveButton("OK") { d, _ -> d.dismiss(); finish() }
+                        .show()
+                }
+            },
+            onWin = { /* handled in onProgress */ }
+        )
+        opponentLoop = ai
+        ai.start()
+
+        // override ENTER to use local judge + VM helper
+        btnEnter.setOnClickListener {
+            val guess = viewModel.getCurrentRowGuess(5)
+            if (guess == null) {
+                Toast.makeText(this, "Not enough letters.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val fb = LocalWordJudge.feedback(guess, localTarget)
+            val won = viewModel.applyLocalFeedbackAndAdvance(fb)
+            if (won) {
+                androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("You win 🎉")
+                    .setMessage("Great job! The word was $localTarget.")
+                    .setPositiveButton("OK") { d, _ -> d.dismiss(); finish() }
+                    .show()
+            } else if (viewModel.gameState.value == GameState.LOST) {
+                androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("AI wins 🧠")
+                    .setMessage("The word was $localTarget.")
+                    .setPositiveButton("OK") { d, _ -> d.dismiss(); finish() }
+                    .show()
+            }
+        }
+    }
+
+    /** Friends race via Firestore events. */
+    private fun startFriendsMultiplayer(code: String, target: String) {
+        val repo = MultiplayerRepository()
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: UUID.randomUUID().toString()
+
+        // local board (use target length)
+        val len = target.length.coerceIn(3, 7)
+        lifecycleScope.launch {
+            viewModel.setModeDaily()
+            viewModel.resetBoard(len)
+        }
+
+        // opponent widget initial
+        opponentView?.bind(OpponentProgress(status = "Waiting…", row = 0))
+
+        // listen to opponent events
+        friendEventsJob?.cancel()
+        friendEventsJob = lifecycleScope.launch {
+            repo.observeEvents(code).collect { ev ->
+                if (ev.userId != uid) {
+                    opponentView?.bind(
+                        OpponentProgress(
+                            lastGuess = ev.guess,
+                            lastFeedback = ev.feedback,
+                            row = ev.row,
+                            status = "Playing"
+                        )
+                    )
+                    if (ev.feedback.all { it == "G" } && viewModel.gameState.value == GameState.PLAYING) {
+                        androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
+                            .setTitle("Opponent wins 🧑‍🤝‍🧑")
+                            .setMessage("The word was $target.")
+                            .setPositiveButton("OK") { d, _ -> d.dismiss(); finish() }
+                            .show()
+                    }
+                }
+            }
+        }
+
+        // override ENTER: local judge + VM helper + push event
+        btnEnter.setOnClickListener {
+            val guess = viewModel.getCurrentRowGuess(len)
+            if (guess == null) {
+                Toast.makeText(this, "Not enough letters.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val fb = LocalWordJudge.feedback(guess, target)
+            val row = viewModel.currentRow()
+            val won = viewModel.applyLocalFeedbackAndAdvance(fb)
+
+            // push my event (ignore errors—show toast)
+            lifecycleScope.launch {
+                try {
+                    repo.postGuess(code, uid, guess, fb, row)
+                } catch (_: Exception) {
+                    Toast.makeText(this@MainActivity, "Couldn’t send move (offline?)", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            if (won) {
+                androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("You win 🎉")
+                    .setMessage("Great job! The word was $target.")
+                    .setPositiveButton("OK") { d, _ -> d.dismiss(); finish() }
+                    .show()
+            } else if (viewModel.gameState.value == GameState.LOST) {
+                androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Opponent wins 🧑‍🤝‍🧑")
+                    .setMessage("The word was $target.")
+                    .setPositiveButton("OK") { d, _ -> d.dismiss(); finish() }
+                    .show()
+            }
+        }
+    }
+
+    // -------------------------
+    // Shared UI bits
+    // -------------------------
+
     private fun setupKeyboardListeners() {
-        // List of all 26 letter button IDs
         val letterKeys = listOf(
             R.id.btnQ, R.id.btnW, R.id.btnE, R.id.btnR, R.id.btnT, R.id.btnY, R.id.btnU, R.id.btnI, R.id.btnO, R.id.btnP,
             R.id.btnA, R.id.btnS, R.id.btnD, R.id.btnF, R.id.btnG, R.id.btnH, R.id.btnJ, R.id.btnK, R.id.btnL,
             R.id.btnZ, R.id.btnX, R.id.btnC, R.id.btnV, R.id.btnB, R.id.btnN, R.id.btnM
         )
-
-        // Loop through all letter IDs and attach the input handler
         letterKeys.forEach { id ->
-            findViewById<Button>(id)?.setOnClickListener { button ->
-                // Extracts the single character (e.g., 'Q')
-                val letter = (button as Button).text.toString().first()
-                // Sends the input to the ViewModel
+            findViewById<Button>(id)?.setOnClickListener { b ->
+                val letter = (b as Button).text.toString().first()
                 viewModel.handleLetterInput(letter)
             }
         }
+        // default enter/backspace (overridden in MP handlers)
+        btnEnter.setOnClickListener { viewModel.processGuess() }
+        btnBackspace.setOnClickListener { viewModel.deleteLetter() }
+    }
 
-        // Attach listener for ENTER button
-        findViewById<Button>(R.id.btnEnter)?.setOnClickListener {
-            viewModel.processGuess()
-        }
+    private fun showEndSummaryDialog(summary: EndGameSummary) {
+        val title = if (summary.won) "You won! 🎉" else "Nice try!"
+        val defLine = summary.definition?.let { "Definition: $it" } ?: "Definition: (not available)"
+        val synLine = summary.synonym?.let { "Synonym: $it" } ?: "Synonym: (not available)"
 
-        // Attach listener for BACKSPACE button
-        findViewById<Button>(R.id.btnBackspace)?.setOnClickListener {
-            viewModel.deleteLetter()
-        }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage("$defLine\n\n$synLine")
+            .setPositiveButton("OK") { d, _ -> d.dismiss() }
+            .show()
+    }
 
-        Log.d("Wordle", "Keyboard listeners attached successfully.")
+    private fun showDailyEndDialog(summary: EndGameSummary) {
+        val title = if (summary.won) "You solved today's Wordle! 🎉" else "Daily attempt over!"
+        val defLine = summary.definition?.let { "Definition: $it" } ?: "Definition: (not available)"
+        val synLine = summary.synonym?.let { "Synonym: $it" } ?: "Synonym: (not available)"
+
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage("$defLine\n\n$synLine\n\nNext daily word in 24h ⏳")
+            .setPositiveButton("OK") { d, _ -> d.dismiss() }
+            .show()
+    }
+
+    override fun onStop() {
+        opponentLoop?.stop()
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        opponentLoop?.stop()
+        friendEventsJob?.cancel()
+        super.onDestroy()
     }
 }

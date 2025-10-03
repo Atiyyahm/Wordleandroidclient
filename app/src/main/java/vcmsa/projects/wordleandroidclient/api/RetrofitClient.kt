@@ -1,19 +1,40 @@
 package vcmsa.projects.wordleandroidclient.api
 
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import vcmsa.projects.wordleandroidclient.api.data.WordleWordsApi
 
 object RetrofitClient {
 
-    private const val BASE_URL = "https://your-api-domain.com/" // **IMPORTANT: Replace with your actual API base URL**
+    // ---- Base URLs ----
+    private const val BASE_URL_WORD = "http://10.0.2.2:4000/api/v1/word/"
+    private const val BASE_URL_SPEEDLE = "http://10.0.2.2:4000/api/v1/speedle/"
 
-    // This uses the correct interface name: WordleWordsApi
-    val apiService: WordleWordsApi by lazy {
+    // ---- Logging ----
+    private val logging = HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.BODY
+    }
+    private val httpClient = OkHttpClient.Builder()
+        .addInterceptor(logging)
+        .build()
+
+    // ---- Services ----
+    val wordService: WordApiService by lazy {
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(BASE_URL_WORD)
+            .client(httpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(WordleWordsApi::class.java)
+            .create(WordApiService::class.java)
+    }
+
+    val speedleService: SpeedleApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL_SPEEDLE)
+            .client(httpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(SpeedleApiService::class.java)
     }
 }

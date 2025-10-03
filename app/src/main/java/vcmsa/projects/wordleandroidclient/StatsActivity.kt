@@ -1,26 +1,23 @@
 package vcmsa.projects.wordleandroidclient
 
-
 import android.os.Bundle
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
 class StatsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // R.layout.activity_stats will be created next
         setContentView(R.layout.activity_stats)
+        supportActionBar?.hide()
 
-        // Setup the action bar for navigation back to the dashboard
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Game Statistics"
+        val stats = StatsManager.getStats(this)
 
-        // TODO: Future: Fetch and display actual stats (Games Played, Win Rate, etc.)
-    }
-
-    // Handles the back button in the action bar
-    override fun onSupportNavigateUp(): Boolean {
-        finish() // Closes this activity and returns to the previous one (Dashboard)
-        return true
+        findViewById<TextView>(R.id.tvPlayed).text         = stats.played.toString()
+        findViewById<TextView>(R.id.tvWins).text           = stats.wins.toString()
+        findViewById<TextView>(R.id.tvLosses).text         = stats.losses.toString()
+        findViewById<TextView>(R.id.tvWinRate).text        = "${stats.winRate}%"
+        findViewById<TextView>(R.id.tvCurrentStreak).text  = stats.currentStreak.toString()
+        findViewById<TextView>(R.id.tvMaxStreak).text      = stats.maxStreak.toString()
     }
 }
