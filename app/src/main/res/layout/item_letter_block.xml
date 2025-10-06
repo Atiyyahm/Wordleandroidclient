@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/cardBlock"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_margin="4dp"
@@ -12,7 +13,6 @@
         android:gravity="center"
         android:textColor="@android:color/white"
         android:textSize="24sp"
-        android:textStyle="bold"
-        tools:text="A" />
+        android:textStyle="bold" />
 
-</FrameLayout>
+</com.google.android.material.card.MaterialCardView>

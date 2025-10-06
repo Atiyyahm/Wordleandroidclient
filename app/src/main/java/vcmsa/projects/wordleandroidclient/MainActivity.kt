@@ -32,6 +32,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var btnEnter: Button
     private lateinit var btnBackspace: Button
+
+    private lateinit var btnBackButton: ImageButton
     private lateinit var btnPowerupDefinition: ImageButton
     private var opponentLoop: AiOpponent? = null
     private var friendEventsJob: Job? = null
@@ -61,7 +63,12 @@ class MainActivity : AppCompatActivity() {
         opponentView = findViewById(R.id.opponentProgress)
         btnEnter = findViewById(R.id.btnEnter)
         btnBackspace = findViewById(R.id.btnBackspace)
+        btnBackButton = findViewById(R.id.btnBack)
         btnPowerupDefinition = findViewById(R.id.btnPowerupDefinition)
+
+        btnBackButton.setOnClickListener {
+            startActivity(Intent(this, DashboardActivity::class.java))
+        }
 
         // --- RecyclerView (5 columns initially; will still look fine for 3–7) ---
         gameBoardRecyclerView = findViewById(R.id.rvGameBoard)
@@ -369,7 +376,7 @@ class MainActivity : AppCompatActivity() {
 
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(title)
-            .setMessage("$defLine\n\n$synLine\n\nNext daily word in 24h ⏳")
+            .setMessage("$defLine\n\n$synLine\n\nSee you again tomorrow!")
             .setPositiveButton("OK") { d, _ -> d.dismiss() }
             .show()
     }

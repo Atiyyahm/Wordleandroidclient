@@ -18,11 +18,9 @@ class WordleViewModelFactory(
         if (modelClass.isAssignableFrom(WordleViewModel::class.java)) {
             return WordleViewModel(
                 wordApi = wordApi,
-                speedleApi = speedleApi
-            ).apply {
-                // inject app context into VM so SpeedleStatsManager can use it
-                this.appContext = appContext
-            } as T
+                speedleApi = speedleApi,
+                appContext = appContext.applicationContext
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }

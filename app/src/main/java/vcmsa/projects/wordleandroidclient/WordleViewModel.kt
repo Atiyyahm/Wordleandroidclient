@@ -18,11 +18,9 @@ import vcmsa.projects.wordleandroidclient.api.*
 
 class WordleViewModel(
     private val wordApi: WordApiService,
-    private val speedleApi: SpeedleApiService
+    private val speedleApi: SpeedleApiService,
+    private val appContext: Context
 ) : ViewModel() {
-
-    // ✅ injected from ViewModelFactory
-    lateinit var appContext: Context
 
     // ---- Mode (Daily vs Speedle) ----
     private val _mode = MutableStateFlow(GameMode.DAILY)
@@ -103,9 +101,16 @@ class WordleViewModel(
                 val meta = resp.body()
                 if (resp.isSuccessful && meta != null) {
                     _today.value = meta
-                    speedleLength = null
-                    resetBoard(meta.length)
-                    _gameState.value = GameState.PLAYING
+
+                    if (meta.played) {
+                        // Already played → fetch stored board and lock
+                        loadMyResultAndRender(meta.date, meta.lang)
+                    } else {
+                        // Fresh board
+                        speedleLength = null
+                        resetBoard(meta.length)
+                        _gameState.value = GameState.PLAYING
+                    }
                 } else {
                     Log.e("WordleVM", "getToday failed: ${resp.code()} ${resp.message()}")
                     _userMessage.value = "Couldn’t load today’s word."
@@ -118,6 +123,100 @@ class WordleViewModel(
             }
         }
     }
+
+
+    /** Send today's result to the server so the user is locked for the day. */
+    private suspend fun submitDailyResult(won: Boolean) {
+        val meta = _today.value ?: return
+        val guesses = collectGuessesSoFar()
+        runCatching {
+            wordApi.submitDaily(
+                SubmitDailyRequest(
+                    date = meta.date,
+                    lang = meta.lang,
+                    guesses = guesses,
+                    won = won,
+                    durationSec = null,   // (optional) add if you track time
+                    clientId = null       // (optional) add if you generate an idempotency key
+                )
+            )
+        }
+    }
+
+    private fun writeGuessRow(rowIndex: Int, guess: String) {
+        val len = guess.length
+        val start = rowIndex * len
+        _boardLetters.update { list ->
+            list.toMutableList().apply {
+                for (i in 0 until len) this[start + i] = guess[i].toString()
+            }
+        }
+        _boardStates.update { list ->
+            list.toMutableList().apply {
+                for (i in 0 until len) this[start + i] = TileState.FILLED
+            }
+        }
+        // keep internal cursors in sync so UI looks consistent
+        currentGuessRow = rowIndex
+        currentPosition = start + len
+    }
+
+    private fun applyFeedbackRow(rowIndex: Int, codes: List<String>) {
+        val len = codes.size
+        val start = rowIndex * len
+        _boardStates.update { list ->
+            list.toMutableList().apply {
+                for (i in 0 until len) {
+                    this[start + i] = when (codes[i]) {
+                        "G" -> TileState.CORRECT
+                        "Y" -> TileState.PRESENT
+                        else -> TileState.ABSENT
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun loadMyResultAndRender(date: String, lang: String) {
+        val resp = wordApi.getMyResult(date = date, lang = lang)
+        if (!resp.isSuccessful) {
+            // Token problem or result not found — fail closed (lock input)
+            _gameState.value = GameState.LOST
+            _userMessage.value = "You’ve already played today. Come back tomorrow!"
+            return
+        }
+        val body = resp.body() ?: return
+        // reset board to the correct width
+        resetBoard(len = (body.guesses.firstOrNull()?.length ?: 5))
+
+        body.guesses.forEachIndexed { row, guess ->
+            writeGuessRow(row, guess.uppercase())
+            val fb = body.feedbackRows.getOrNull(row) ?: emptyList()
+            if (fb.isNotEmpty()) applyFeedbackRow(row, fb)
+        }
+
+        // Lock the board by moving to a terminal state
+        _gameState.value = if (body.won) GameState.WON else GameState.LOST
+        _userMessage.value = "You’ve already played today. Come back tomorrow!"
+    }
+
+    private fun collectGuessesSoFar(): List<String> {
+        val len = currentLen
+        val rowsUsed = currentGuessRow + 1  // row index is 0-based
+        val result = mutableListOf<String>()
+        for (row in 0 until rowsUsed) {
+            val start = row * len
+            val end = start + len
+            val guess = _boardLetters.value.subList(start, end).joinToString("")
+            if (guess.length == len && guess.all { it.isLetter() }) {
+                result.add(guess.uppercase())
+            }
+        }
+        return result
+    }
+
+
+
 
     // ---------- SPEEDLE ----------
 
@@ -301,6 +400,11 @@ class WordleViewModel(
                         if (body.won) {
                             _gameState.value = GameState.WON
                             stopTimer()
+
+
+                            // fire-and-forget submit
+                            viewModelScope.launch { submitDailyResult(won = true) }
+
                             loadEndSummaryDaily(true)
                         } else {
                             advanceOrLoseDaily()
@@ -372,6 +476,7 @@ class WordleViewModel(
         } else {
             _gameState.value = GameState.LOST
             stopTimer()
+            viewModelScope.launch { submitDailyResult(won = false) }
             loadEndSummaryDaily(false)
         }
     }
@@ -383,7 +488,7 @@ class WordleViewModel(
             try {
                 val defResp = wordApi.getDefinition(meta.lang, meta.date).body()
                 val synResp = wordApi.getSynonym(meta.lang, meta.date).body()
-                _summary.value = EndGameSummary(defResp?.definition?.get("definition"), synResp?.synonym, won)
+                _summary.value = EndGameSummary(defResp?.definition?.definition, synResp?.synonym, won)
             } catch (_: Exception) {
                 _summary.value = EndGameSummary(null, null, won)
             }
@@ -427,7 +532,7 @@ class WordleViewModel(
             try {
                 val resp = wordApi.getDefinition(meta.lang, meta.date)
                 if (resp.isSuccessful) {
-                    _hintMessage.value = resp.body()?.definition?.get("definition") ?: "No definition found."
+                    _hintMessage.value = resp.body()?.definition?.definition ?: "No definition found."
                 } else {
                     _userMessage.value = "Couldn’t load definition."
                 }

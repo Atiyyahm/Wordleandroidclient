@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.card.MaterialCardView
 
 class GameBoardAdapter(
     private var letters: List<String>,
@@ -21,7 +22,7 @@ class GameBoardAdapter(
 
     inner class LetterBlockViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val letterTextView: TextView = itemView.findViewById(R.id.tvLetterBlock)
-        private val blockCard: CardView = itemView as CardView
+        private val blockCard: MaterialCardView = itemView.findViewById(R.id.cardBlock)
 
         fun bindAt(position: Int, letter: String, state: TileState) {
             letterTextView.text = letter
@@ -74,7 +75,7 @@ class GameBoardAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LetterBlockViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_letter_block, parent, false) as CardView
+            .inflate(R.layout.item_letter_block, parent, false)
         return LetterBlockViewHolder(view)
     }
 
