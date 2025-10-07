@@ -152,11 +152,36 @@ WordRush follows a three-layer cloud architecture:
 
 | Welcome | Launch | Register | Login | Dashboard |
 |---------|--------|----------|-------|-----------|
-| <img src="images/welcome%20screen.jpeg" width="250"/> | <img src="images/launch%20screen.jpeg" width="250"/> | <img src="/images/Register.jpeg" width="250"/> | <img src="images/login.jpeg" width="250"/> |<img src="images/Home%20Screen.jpeg" width="250"/> |
+| <img src="images/welcome%20screen.jpeg" width="250"/> | <img src="images/launch%20screen.jpeg" width="250"/> | <img src="images/Register.jpeg" width="250"/> | <img src="images/login.jpeg" width="250"/> |<img src="images/Home%20Screen.jpeg" width="250"/> |
 
 
 ---
 
+| Tutorial Screen | Daily WordRush | Speedle Mode Time  | Speedle mode  |
+|-----------------|----------------|------------------ |----------------|
+| <img src="images/Tutorial.jpeg" width="250"/> | <img src="images/dailywordlescreen.png" width="250"/> | <img src="images/speedlescreen1.png" width="250"/> |<img src="images/speedlescreen2.png" width="250"/> |
+
+---
+
+| Multi-player mode Selection  | Muti-player with AI | End Game Screens   | Badges  |
+|-----------------|----------------|------------------ |----------------|
+| <img src="images/MutiplayerAi_S1.jpeg" width="250"/> | <img src="images/MutiplayerAi_S2.jpeg" width="250"/> | <img src="images/EndGameScreen.png" width="250"/> |<img src="images/badges.png.png" width="250"/> |
+
+
+---
+| Hints  | Navbar | Profile   | Settings   |
+|-----------------|----------------|------------------ |----------------|
+| <img src="images/hints.png" width="250"/> | <img src="images/navbar.png width="250"/> | <img src="images/profile%20screen.png" width="250"/> |<img src="images/settings%20screen.png" width="250"/> |
+
+
+---
+---
+| Light Mode & Dark Mode |
+|----------------|
+| <img src="images/dm_lm.png" width="250"/> 
+
+
+---
 ## 🧰 Tech Stack
 
 | Layer | Technology |
