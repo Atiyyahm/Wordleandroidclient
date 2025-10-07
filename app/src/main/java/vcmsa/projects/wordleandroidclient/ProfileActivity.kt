@@ -75,7 +75,7 @@ class ProfileActivity : AppCompatActivity() {
     private fun showComingSoon(feature: String) {
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(feature)
-            .setMessage("Coming soon ")
+            .setMessage("Coming soon")
             .setPositiveButton("OK", null)
             .show()
     }

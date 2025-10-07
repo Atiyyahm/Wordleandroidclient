@@ -7,9 +7,10 @@
     <string name="help">Help</string>
     <string name="enter">ENT</string>
     <string name="backspace">BACK</string>
-    <string name="definition_hint">Definition hint</string>
     <string name="powerup_locked">Power-up locked</string>
     <string name="backspace_short">BACK</string>
     <string name="opponent_avatar">Opponent avatar</string>
     <string name="no_guess_yet">No guess yet</string>
+    <string name="definition_hint">Hint: definition</string>
+    <string name="synonym_hint">Hint: synonym</string>
 </resources>

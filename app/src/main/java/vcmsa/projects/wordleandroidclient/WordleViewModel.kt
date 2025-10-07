@@ -683,6 +683,22 @@ class WordleViewModel(
         }
     }
 
+    fun revealSynonymHint() {
+        viewModelScope.launch {
+            val meta = _today.value ?: return@launch
+            try {
+                val resp = wordApi.getSynonym(meta.lang, meta.date)
+                if (resp.isSuccessful) {
+                    _hintMessage.value = resp.body()?.synonym ?: "No synonym found."
+                } else {
+                    _userMessage.value = "Couldn't load synonym."
+                }
+            } catch (e: Exception) {
+                _userMessage.value = "Network error."
+            }
+        }
+    }
+
     fun currentRow(): Int = currentGuessRow
 
     fun isCurrentRowFilled(len: Int = currentLen): Boolean {

@@ -12,16 +12,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import vcmsa.projects.wordleandroidclient.api.RetrofitClient
-import vcmsa.projects.wordleandroidclient.multiplayer.AiDifficulty
-import vcmsa.projects.wordleandroidclient.multiplayer.AiOpponent
-import vcmsa.projects.wordleandroidclient.multiplayer.LocalWordJudge
-import vcmsa.projects.wordleandroidclient.multiplayer.MultiplayerRepository
-import vcmsa.projects.wordleandroidclient.multiplayer.OpponentProgress
-import vcmsa.projects.wordleandroidclient.multiplayer.OpponentProgressView
-import com.google.firebase.auth.FirebaseAuth
+import vcmsa.projects.wordleandroidclient.multiplayer.*
+
 import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
@@ -31,11 +27,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var gameBoardRecyclerView: RecyclerView
     private lateinit var gameBoardAdapter: GameBoardAdapter
 
+    private lateinit var hintDefinitionContainer: android.view.View
+    private lateinit var hintSynonymContainer: android.view.View
+
     private lateinit var btnEnter: Button
     private lateinit var btnBackspace: Button
 
     private lateinit var btnBackButton: ImageButton
-    private lateinit var btnPowerupDefinition: ImageButton
+
+    private lateinit var btnHintDefinition: ImageButton
+    private lateinit var btnHintSynonym: ImageButton
+    private var lastHintTitle: String = "Hint"
     private var opponentLoop: AiOpponent? = null
     private var friendEventsJob: Job? = null
 
@@ -61,11 +63,18 @@ class MainActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this, factory)[WordleViewModel::class.java]
 
         // --- Layout refs ---
-        opponentView = findViewById(R.id.opponentProgress)
-        btnEnter = findViewById(R.id.btnEnter)
-        btnBackspace = findViewById(R.id.btnBackspace)
-        btnBackButton = findViewById(R.id.btnBack)
-        btnPowerupDefinition = findViewById(R.id.btnPowerupDefinition)
+        opponentView       = findViewById(R.id.opponentProgress)
+        btnEnter           = findViewById(R.id.btnEnter)
+        btnBackspace       = findViewById(R.id.btnBackspace)
+        btnBackButton      = findViewById(R.id.btnBack)
+        btnHintDefinition  = findViewById(R.id.btnHintDefinition)
+        btnHintSynonym     = findViewById(R.id.btnHintSynonym)
+
+
+
+        hintDefinitionContainer = findViewById(R.id.hintDefinitionContainer)
+        hintSynonymContainer    = findViewById(R.id.hintSynonymContainer)
+        // Do NOT wire hint click listeners here anymore — we set them per-mode later.
 
         btnBackButton.setOnClickListener {
             startActivity(Intent(this, DashboardActivity::class.java))
@@ -97,36 +106,26 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.remainingSeconds.collect { seconds ->
                 val timerView = findViewById<TextView>(R.id.tvSpeedleTimer)
-
-                // Only show timer in Speedle mode
                 if (seconds != null && viewModel.mode.value == GameMode.SPEEDLE) {
                     timerView?.visibility = android.view.View.VISIBLE
                     val mins = seconds / 60
                     val secs = seconds % 60
                     timerView?.text = String.format("%d:%02d", mins, secs)
-
-                    // Change color when time is low
-                    if (seconds <= 10) {
-                        timerView?.setTextColor(android.graphics.Color.RED)
-                    } else {
-                        timerView?.setTextColor(android.graphics.Color.parseColor("#333333"))
-                    }
+                    timerView?.setTextColor(
+                        if (seconds <= 10) android.graphics.Color.RED
+                        else android.graphics.Color.parseColor("#333333")
+                    )
                 } else {
-                    // Hide timer in Daily/AI/Friends modes
                     timerView?.visibility = android.view.View.GONE
                 }
             }
         }
 
-// Pre-countdown display (3...2...1... before timer starts)
+        // Pre-countdown display
         lifecycleScope.launch {
             viewModel.preCountdownSeconds.collect { seconds ->
                 if (seconds != null && seconds > 0) {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Starting in $seconds...",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(this@MainActivity, "Starting in $seconds...", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -145,7 +144,6 @@ class MainActivity : AppCompatActivity() {
         }
         lifecycleScope.launch {
             viewModel.gameState.collect { state ->
-                // Only record stats if we're NOT loading a previous result
                 if (!viewModel.isLoadingPreviousResult.value) {
                     when (state) {
                         GameState.WON  -> StatsManager.recordGame(applicationContext, won = true)
@@ -170,18 +168,15 @@ class MainActivity : AppCompatActivity() {
 
         // Disable ENTER while a request is in flight (server modes)
         lifecycleScope.launch {
-            viewModel.isSubmitting.collect { busy ->
-                btnEnter.isEnabled = !busy
-            }
+            viewModel.isSubmitting.collect { busy -> btnEnter.isEnabled = !busy }
         }
 
-        // --- Power-up: Definition (Daily only) ---
-        btnPowerupDefinition.setOnClickListener { viewModel.revealDefinitionHint() }
+        // Show hint content in a dialog when VM sets it
         lifecycleScope.launch {
             viewModel.hintMessage.collect { msg ->
                 if (msg != null) {
                     androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
-                        .setTitle("Hint: Definition")
+                        .setTitle(lastHintTitle)
                         .setMessage(msg)
                         .setPositiveButton("OK") { d, _ -> d.dismiss() }
                         .show()
@@ -221,6 +216,9 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        // Wire hint buttons visibility/behavior based on the resolved mode
+        wireHintButtonsForMode(playMode)
     }
 
     // -------------------------
@@ -233,7 +231,6 @@ class MainActivity : AppCompatActivity() {
 
     /** On-device AI race (same word, first to solve). */
     private fun startAiMultiplayer() {
-        // 1) pick local target (unchanged)
         val words = try {
             assets.open("wordlist_en_5.txt")
                 .bufferedReader().readLines()
@@ -241,14 +238,11 @@ class MainActivity : AppCompatActivity() {
         } catch (_: Exception) { emptyList() }
         val localTarget = if (words.isNotEmpty()) words.random() else "CRANE"
 
-        // 2) set up a local board that can accept input
         viewModel.startLocalAiMatch(5)
 
-        // 3) show opponent widget
         opponentView?.visibility = android.view.View.VISIBLE
         opponentView?.bind(OpponentProgress(status = "Ready", row = 0))
 
-        // 4) start AI loop (unchanged)
         val diffName = intent.getStringExtra("aiDifficulty") ?: "MEDIUM"
         val diff = AiDifficulty.valueOf(diffName)
         val ai = AiOpponent(
@@ -272,14 +266,11 @@ class MainActivity : AppCompatActivity() {
                 }
             },
             onWin = { /* handled above */ },
-
-            // NEW: keep AI in lock-step with you
             playerRowProvider = { viewModel.currentRow() }
         )
         opponentLoop = ai
         ai.start()
 
-        // 5) local judge enter handler
         btnEnter.setOnClickListener {
             val guess = viewModel.getCurrentRowGuess(5)
             if (guess == null) {
@@ -304,23 +295,76 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /** Show/hide and wire hint buttons per mode. */
+    private fun wireHintButtonsForMode(mode: String) {
+        // clear previous listeners
+        btnHintDefinition.setOnClickListener(null)
+        btnHintSynonym.setOnClickListener(null)
+
+        when (mode) {
+            "SPEEDLE" -> {
+                hintDefinitionContainer.visibility = android.view.View.VISIBLE
+                hintSynonymContainer.visibility    = android.view.View.GONE
+
+                btnHintDefinition.setOnClickListener {
+                    androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle("Use hint?")
+                        .setMessage("Reveal the definition (−10s). Continue?")
+                        .setPositiveButton("Use hint") { d, _ ->
+                            lastHintTitle = "Hint: Definition"
+                            viewModel.useSpeedleDefinitionHint()
+                            d.dismiss()
+                        }
+                        .setNegativeButton("Cancel", null)
+                        .show()
+                }
+            }
+            "AI_MULTIPLAYER" -> {
+                hintDefinitionContainer.visibility = android.view.View.GONE
+                hintSynonymContainer.visibility    = android.view.View.GONE
+            }
+            "FRIENDS_MULTIPLAYER", "DAILY" -> {
+                hintDefinitionContainer.visibility = android.view.View.VISIBLE
+                hintSynonymContainer.visibility    = android.view.View.VISIBLE
+
+                btnHintDefinition.setOnClickListener {
+                    lastHintTitle = "Hint: Definition"
+                    viewModel.revealDefinitionHint()
+                }
+                btnHintSynonym.setOnClickListener {
+                    lastHintTitle = "Hint: Synonym"
+                    viewModel.revealSynonymHint()
+                }
+            }
+            else -> {
+                hintDefinitionContainer.visibility = android.view.View.VISIBLE
+                hintSynonymContainer.visibility    = android.view.View.VISIBLE
+                btnHintDefinition.setOnClickListener {
+                    lastHintTitle = "Hint: Definition"
+                    viewModel.revealDefinitionHint()
+                }
+                btnHintSynonym.setOnClickListener {
+                    lastHintTitle = "Hint: Synonym"
+                    viewModel.revealSynonymHint()
+                }
+            }
+        }
+    }
+
 
     /** Friends race via Firestore events. */
     private fun startFriendsMultiplayer(code: String, target: String) {
         val repo = MultiplayerRepository()
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: UUID.randomUUID().toString()
 
-        // local board (use target length)
         val len = target.length.coerceIn(3, 7)
         lifecycleScope.launch {
             viewModel.setModeDaily()
             viewModel.resetBoard(len)
         }
 
-        // opponent widget initial
         opponentView?.bind(OpponentProgress(status = "Waiting…", row = 0))
 
-        // listen to opponent events
         friendEventsJob?.cancel()
         friendEventsJob = lifecycleScope.launch {
             repo.observeEvents(code).collect { ev ->
@@ -344,7 +388,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // override ENTER: local judge + VM helper + push event
         btnEnter.setOnClickListener {
             val guess = viewModel.getCurrentRowGuess(len)
             if (guess == null) {
@@ -355,7 +398,6 @@ class MainActivity : AppCompatActivity() {
             val row = viewModel.currentRow()
             val won = viewModel.applyLocalFeedbackAndAdvance(fb)
 
-            // push my event (ignore errors—show toast)
             lifecycleScope.launch {
                 try {
                     repo.postGuess(code, uid, guess, fb, row)
@@ -396,7 +438,6 @@ class MainActivity : AppCompatActivity() {
                 viewModel.handleLetterInput(letter)
             }
         }
-        // default enter/backspace (overridden in MP handlers)
         btnEnter.setOnClickListener { viewModel.processGuess() }
         btnBackspace.setOnClickListener { viewModel.deleteLetter() }
     }

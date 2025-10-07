@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.view.View
+import android.widget.Button
 import android.widget.ImageButton
 import android.widget.RadioGroup
 import android.widget.TextView
@@ -20,6 +21,7 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import vcmsa.projects.wordleandroidclient.multiplayer.PlayWithAIActivity
 
 
 class DashboardActivity : AppCompatActivity() {
@@ -32,6 +34,7 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var chipStreak: TextView
     private lateinit var tvDailyCountdown: TextView
     private lateinit var bottomNav: BottomNavigationView
+    private lateinit var btnAI: Button
 
     private lateinit var cardDaily: View
 
@@ -118,6 +121,7 @@ class DashboardActivity : AppCompatActivity() {
         tvDailyCountdown = findViewById(R.id.tvDailyCountdown)
         bottomNav = findViewById(R.id.bottomNav)
         cardDaily = findViewById(R.id.cardDaily)
+        btnAI = findViewById(R.id.btnAI)
 
         // --- Greeting + streak chip ---
         val user = auth.currentUser
@@ -163,6 +167,10 @@ class DashboardActivity : AppCompatActivity() {
         }
         findViewById<View>(R.id.qaHowTo).setOnClickListener { showHowToDialog() }
 
+
+        btnAI.setOnClickListener {
+            startActivity(Intent(this, PlayWithAIActivity::class.java))
+        }
 
         // --- Speedle selector on the Speedle card ---
         val rg = findViewById<RadioGroup>(R.id.rgSpeedle).apply {

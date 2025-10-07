@@ -52,14 +52,6 @@
             android:text="1:30"
             android:padding="16dp" />
 
-        <ImageButton
-            android:id="@+id/btnHelp"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="@string/help"
-            android:src="@drawable/ic_help"
-            app:tint="@color/icon_tint" />
     </LinearLayout>
 
     <!-- Opponent panel (sits between top bar and board) -->
@@ -131,36 +123,61 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <ImageButton
-            android:id="@+id/btnPowerupDefinition"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:layout_margin="8dp"
-            android:background="@drawable/bg_power_chip_active"
-            android:contentDescription="@string/definition_hint"
-            app:srcCompat="@drawable/ic_book_hint"
-            app:tint="@color/icon_tint" />
+        <!-- Hint: Definition -->
+        <LinearLayout
+            android:id="@+id/hintDefinitionContainer"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="8dp">
 
-        <ImageButton
-            android:id="@+id/btnPowerup2Disabled"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:layout_margin="8dp"
-            android:background="@drawable/bg_power_chip_disabled"
-            android:contentDescription="@string/powerup_locked"
-            app:srcCompat="@drawable/ic_powerup_placeholder"
-            app:tint="@color/icon_tint" />
+            <ImageButton
+                android:id="@+id/btnHintDefinition"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_power_chip_active"
+                android:contentDescription="@string/definition_hint"
+                android:src="@drawable/ic_lightbulb"
+                app:tint="@color/icon_tint" />
 
-        <ImageButton
-            android:id="@+id/btnPowerup3Disabled"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:layout_margin="8dp"
-            android:background="@drawable/bg_power_chip_disabled"
-            android:contentDescription="@string/powerup_locked"
-            app:srcCompat="@drawable/ic_powerup_placeholder"
-            app:tint="@color/icon_tint" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hint: definition"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:paddingTop="6dp"/>
+        </LinearLayout>
+
+        <!-- Hint: Synonym -->
+        <LinearLayout
+            android:id="@+id/hintSynonymContainer"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="8dp">
+
+            <ImageButton
+                android:id="@+id/btnHintSynonym"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_power_chip_active"
+                android:contentDescription="@string/synonym_hint"
+                android:src="@drawable/ic_lightbulb"
+                app:tint="@color/icon_tint" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hint: synonym"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:paddingTop="6dp"/>
+        </LinearLayout>
     </LinearLayout>
+
 
     <!-- Keyboard -->
     <LinearLayout

@@ -9,7 +9,7 @@
         android:icon="@drawable/ic_speedlemode"/>
 
     <item android:id="@+id/nav_multiplayer"
-        android:title="Multiplayer"
+        android:title="Play vs AI"
         android:icon="@drawable/ic_multiplayer"/>
 
     <item android:id="@+id/nav_leaderboard"
