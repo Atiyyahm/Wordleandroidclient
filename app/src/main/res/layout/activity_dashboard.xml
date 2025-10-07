@@ -290,19 +290,19 @@
                     android:orientation="horizontal"
                     android:layout_marginTop="10dp">
 
-                    <Button
-                        android:id="@+id/btnFriend"
-                        android:layout_width="0dp"
-                        android:layout_height="48dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/btn_outline_pink"
-                        android:text="Play with Friend"
-                        android:textAllCaps="false"
-                        android:textColor="#FF60C6"/>
+<!--                    <Button-->
+<!--                        android:id="@+id/btnFriend"-->
+<!--                        android:layout_width="0dp"-->
+<!--                        android:layout_height="48dp"-->
+<!--                        android:layout_weight="1"-->
+<!--                        android:background="@drawable/btn_outline_pink"-->
+<!--                        android:text="Play with Friend"-->
+<!--                        android:textAllCaps="false"-->
+<!--                        android:textColor="#FF02A2FD"/>-->
 
-                    <Space
-                        android:layout_width="12dp"
-                        android:layout_height="1dp"/>
+<!--                    <Space-->
+<!--                        android:layout_width="12dp"-->
+<!--                        android:layout_height="1dp"/>-->
 
                     <Button
                         android:id="@+id/btnAI"
@@ -314,15 +314,6 @@
                         android:textAllCaps="false"
                         android:textColor="@android:color/white"/>
                 </LinearLayout>
-            </LinearLayout>
-
-            <!-- Learn & Rewards pills -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="18dp">
-
             </LinearLayout>
 
         </LinearLayout>

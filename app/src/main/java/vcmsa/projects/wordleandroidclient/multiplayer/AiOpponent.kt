@@ -16,7 +16,10 @@ class AiOpponent(
     private val targetWord: String,
     private val wordLength: Int,
     private val onProgress: (guess: String, feedback: List<String>, row: Int) -> Unit,
-    private val onWin: (rowsUsed: Int) -> Unit
+    private val onWin: (rowsUsed: Int) -> Unit,
+    //tells the AI what row the player is on
+    private val playerRowProvider: () -> Int
+
 ) {
     private var job: Job? = null
     private var row = 0
@@ -41,14 +44,21 @@ class AiOpponent(
         if (candidates.isEmpty()) return
 
         val (guessDelayMs, strictness) = when (difficulty) {
-            AiDifficulty.EASY   -> 2400L to 0.60f
-            AiDifficulty.MEDIUM -> 1600L to 0.80f
-            AiDifficulty.HARD   -> 900L  to 1.00f
+            AiDifficulty.EASY   -> 3800L to 0.55f
+            AiDifficulty.MEDIUM -> 2600L to 0.75f
+            AiDifficulty.HARD   -> 1500L to 1.00f
         }
 
         job = scope.launch {
             while (isActive && row < 6) {
-                delay(guessDelayMs)
+
+                while (isActive && playerRowProvider() <= row) {
+                    delay(120)
+                }
+
+                val extra = (candidates.size.coerceAtMost(200) / 40) * 120L
+                delay(guessDelayMs + extra)
+
                 if (!isActive) break
 
                 val guess = pickNextGuess(strictness)

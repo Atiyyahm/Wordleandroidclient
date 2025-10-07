@@ -191,14 +191,24 @@ class WordleViewModel(
         _gameState.value = if (body.won) GameState.WON else GameState.LOST
         _userMessage.value = "You've already played today. Come back tomorrow!"
 
+        viewModelScope.launch {
+            val def = runCatching { wordApi.getDefinition(body.lang, body.date).body()?.definition?.definition }.getOrNull()
+            val syn = runCatching { wordApi.getSynonym  (body.lang, body.date).body()?.synonym }.getOrNull()
+            _summary.value = EndGameSummary(
+                definition = def,
+                synonym = syn,
+                won = body.won,
+                word = body.answer?.uppercase()
+            )
+        }
+
         _isLoadingPreviousResult.value = false
     }
 
-    private suspend fun submitDailyResult(won: Boolean) {
-        val meta = _today.value ?: return
+    private suspend fun submitDailyResult(won: Boolean): String? {
+        val meta = _today.value ?: return null
         val guesses = collectGuessesSoFar()
-
-        try {
+        return try {
             val resp = wordApi.submitDaily(
                 SubmitDailyRequest(
                     date = meta.date,
@@ -209,18 +219,13 @@ class WordleViewModel(
                     clientId = null
                 )
             )
-
-            if (!resp.isSuccessful) {
-                Log.e("WordleVM", "submitDaily failed: ${resp.code()} ${resp.message()}")
-                // Ensure dashboard gating still works:
-                writeResultDocFallback(meta.date, meta.lang, won, guesses)
-            }
+            resp.body()?.answer?.uppercase()    // 👈 return answer
         } catch (e: Exception) {
             Log.e("WordleVM", "submitDaily error", e)
-            // Ensure dashboard gating still works:
-            writeResultDocFallback(meta.date, meta.lang, won, guesses)
+            null
         }
     }
+
 
     private suspend fun writeResultDocFallback(
         date: String,
@@ -514,13 +519,15 @@ class WordleViewModel(
                             val guesses = collectGuessesSoFar()
                             val feedbackRows = extractFeedbackRows()
 
-                            submitDailyResult(won = true)
+                            // Submit and get the answer:
+                            val answer = submitDailyResult(won = true)
+
                             _today.value?.date?.let {
                                 SettingsStore.setLastPlayedDate(appContext, it)
                                 SettingsStore.saveLastGameState(appContext, guesses, feedbackRows)
                             }
 
-                            loadEndSummaryDaily(true)
+                            loadEndSummaryDaily(true, answer)
                         } else {
                             advanceOrLoseDaily()
                         }
@@ -601,21 +608,32 @@ class WordleViewModel(
                     SettingsStore.setLastPlayedDate(appContext, it)
                     SettingsStore.saveLastGameState(appContext, guesses, feedbackRows)
                 }
-            }
 
-            loadEndSummaryDaily(false)
+                val meta = _today.value
+                val my = if (meta != null) {
+                    runCatching { wordApi.getMyResult(meta.date, meta.lang).body() }.getOrNull()
+                } else null
+                val answer = my?.answer
+
+                loadEndSummaryDaily(false, answer)
+            }
         }
     }
 
-    private fun loadEndSummaryDaily(won: Boolean) {
+    private fun loadEndSummaryDaily(won: Boolean, word: String?) {
         val meta = _today.value ?: return
         viewModelScope.launch {
             try {
                 val defResp = wordApi.getDefinition(meta.lang, meta.date).body()
                 val synResp = wordApi.getSynonym(meta.lang, meta.date).body()
-                _summary.value = EndGameSummary(defResp?.definition?.definition, synResp?.synonym, won)
+                _summary.value = EndGameSummary(
+                    definition = defResp?.definition?.definition,
+                    synonym = synResp?.synonym,
+                    won = won,
+                    word = word?.uppercase()
+                )
             } catch (_: Exception) {
-                _summary.value = EndGameSummary(null, null, won)
+                _summary.value = EndGameSummary(null, null, won, word?.uppercase())
             }
         }
     }
@@ -633,7 +651,7 @@ class WordleViewModel(
                     finishSpeedle("timeout")
                 } else {
                     _gameState.value = GameState.LOST
-                    loadEndSummaryDaily(false)
+                    loadEndSummaryDaily(false, null)
                 }
             }
         }
@@ -696,5 +714,11 @@ class WordleViewModel(
 
     fun clearHint() {
         _hintMessage.value = null
+    }
+
+    fun startLocalAiMatch(len: Int = 5) {
+        setModeDaily()           // reuse daily board visuals
+        resetBoard(len)          // clears rows
+        _gameState.value = GameState.PLAYING
     }
 }

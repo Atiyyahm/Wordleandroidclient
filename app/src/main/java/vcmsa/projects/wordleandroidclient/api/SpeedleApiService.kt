@@ -65,7 +65,8 @@ data class SpeedleFinishResponse(
     val leaderboardPosition: Int?,  // optional
     val definition: String?,
     val synonym: String?,
-    val answer: String?
+    val answer: String?,
+
 )
 
 // Leaderboard

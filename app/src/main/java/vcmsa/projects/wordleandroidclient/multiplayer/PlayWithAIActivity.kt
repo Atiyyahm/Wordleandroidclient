@@ -12,6 +12,8 @@ class PlayWithAIActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_play_with_ai)
 
+        findViewById<android.view.View>(R.id.btnBack).setOnClickListener { finish() }
+
         val rg = findViewById<RadioGroup>(R.id.rgDifficulty).apply {
             check(R.id.rbMedium) // default
         }

@@ -63,7 +63,8 @@ data class SubmitDailyRequest(
 
 data class SubmitDailyResponse(
     val status: String,
-    val deduped: Boolean? = null
+    val deduped: Boolean? = null,
+    val answer: String? = null
 )
 
 data class MyResultResponse(
@@ -75,7 +76,8 @@ data class MyResultResponse(
     val won: Boolean,
     val guessCount: Int,
     val durationSec: Int,
-    val submittedAt: String?
+    val submittedAt: String?,
+    val answer: String? = null
 )
 
 interface WordApiService {

@@ -63,9 +63,11 @@
             android:exported="false" />
 
         <!-- Multiplayer waiting room  -->
-        <activity
-            android:name="vcmsa.projects.wordleandroidclient.multiplayer.WaitingRoomActivity"
-            android:exported="false" />
+        <activity android:name=".multiplayer.MultiplayerModeActivity" />
+        <activity android:name=".multiplayer.PlayWithAIActivity" />
+        <activity android:name=".multiplayer.PlayWithFriendsActivity" />
+        <activity android:name=".multiplayer.WaitingRoomActivity" />
+
 
         <activity android:name=".SettingsActivity" />
 

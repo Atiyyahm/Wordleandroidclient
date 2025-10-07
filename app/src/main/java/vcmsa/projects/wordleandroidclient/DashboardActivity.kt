@@ -149,6 +149,19 @@ class DashboardActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.qaHowTo).setOnClickListener { showHowToDialog() }
 
+        findViewById<View>(R.id.qaSpeedle).setOnClickListener {
+            bottomNav.selectedItemId = R.id.nav_speedle
+        }
+        findViewById<View>(R.id.qaMultiplayer).setOnClickListener {
+            bottomNav.selectedItemId = R.id.nav_multiplayer
+        }
+        findViewById<View>(R.id.qaLeaderboard).setOnClickListener {
+            showComingSoon("Leaderboard")
+        }
+        findViewById<View>(R.id.qaStats).setOnClickListener {
+            showComingSoon("Stats")
+        }
+        findViewById<View>(R.id.qaHowTo).setOnClickListener { showHowToDialog() }
 
 
         // --- Speedle selector on the Speedle card ---
@@ -183,19 +196,12 @@ class DashboardActivity : AppCompatActivity() {
                 }
 
                 R.id.nav_multiplayer -> {
-                    // Wire up your multiplayer screen here when ready:
-                    // startActivity(Intent(this, vcmsa.projects.wordleandroidclient.multiplayer.WaitingRoomActivity::class.java))
-                    Toast.makeText(this, "Multiplayer coming soon", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, vcmsa.projects.wordleandroidclient.multiplayer.PlayWithAIActivity::class.java))
                     true
                 }
 
                 R.id.nav_leaderboard -> {
-                    startActivity(
-                        Intent(this, LeaderboardActivity::class.java).apply {
-                            putExtra("date", getTodayIso())
-                            putExtra("duration", 90)
-                        }
-                    )
+                    showComingSoon("Leaderboard")
                     true
                 }
 
@@ -216,6 +222,13 @@ class DashboardActivity : AppCompatActivity() {
         refreshDailyCardState()
     }
 
+    private fun showComingSoon(feature: String) {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("$feature")
+            .setMessage("Coming soon ")
+            .setPositiveButton("OK", null)
+            .show()
+    }
 
     private fun showSpeedleDurationChooser() {
         val durations = arrayOf("60 seconds", "90 seconds", "120 seconds")

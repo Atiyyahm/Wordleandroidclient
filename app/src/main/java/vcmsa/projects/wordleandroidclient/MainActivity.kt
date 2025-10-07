@@ -233,7 +233,7 @@ class MainActivity : AppCompatActivity() {
 
     /** On-device AI race (same word, first to solve). */
     private fun startAiMultiplayer() {
-        // pick a local target (5 letters for v1)
+        // 1) pick local target (unchanged)
         val words = try {
             assets.open("wordlist_en_5.txt")
                 .bufferedReader().readLines()
@@ -241,16 +241,14 @@ class MainActivity : AppCompatActivity() {
         } catch (_: Exception) { emptyList() }
         val localTarget = if (words.isNotEmpty()) words.random() else "CRANE"
 
-        // prepare local board
-        lifecycleScope.launch {
-            viewModel.setModeDaily()
-            viewModel.resetBoard(5)
-        }
+        // 2) set up a local board that can accept input
+        viewModel.startLocalAiMatch(5)
 
-        // opponent widget initial state
+        // 3) show opponent widget
+        opponentView?.visibility = android.view.View.VISIBLE
         opponentView?.bind(OpponentProgress(status = "Ready", row = 0))
 
-        // start AI loop
+        // 4) start AI loop (unchanged)
         val diffName = intent.getStringExtra("aiDifficulty") ?: "MEDIUM"
         val diff = AiDifficulty.valueOf(diffName)
         val ai = AiOpponent(
@@ -267,18 +265,21 @@ class MainActivity : AppCompatActivity() {
                 )
                 if (fb.all { it == "G" } && viewModel.gameState.value == GameState.PLAYING) {
                     androidx.appcompat.app.AlertDialog.Builder(this)
-                        .setTitle("AI wins 🧠")
+                        .setTitle("AI wins ")
                         .setMessage("The word was $localTarget.")
                         .setPositiveButton("OK") { d, _ -> d.dismiss(); finish() }
                         .show()
                 }
             },
-            onWin = { /* handled in onProgress */ }
+            onWin = { /* handled above */ },
+
+            // NEW: keep AI in lock-step with you
+            playerRowProvider = { viewModel.currentRow() }
         )
         opponentLoop = ai
         ai.start()
 
-        // override ENTER to use local judge + VM helper
+        // 5) local judge enter handler
         btnEnter.setOnClickListener {
             val guess = viewModel.getCurrentRowGuess(5)
             if (guess == null) {
@@ -302,6 +303,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
 
     /** Friends race via Firestore events. */
     private fun startFriendsMultiplayer(code: String, target: String) {
@@ -401,15 +403,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun showEndSummaryDialog(summary: EndGameSummary) {
         val title = if (summary.won) "You won! 🎉" else "Nice try!"
-        val defLine = summary.definition?.let { "Definition: $it" } ?: "Definition: (not available)"
-        val synLine = summary.synonym?.let { "Synonym: $it" } ?: "Synonym: (not available)"
-        val wordLine = summary.word?.let { "Word: $it" }
-
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle(title)
-            .setMessage("$defLine\n\n$synLine")
-            .setPositiveButton("OK") { d, _ -> d.dismiss() }
-            .show()
+        val defLine  = summary.definition?.let { "Definition: $it" } ?: "Definition: (not available)"
+        val synLine  = summary.synonym?.let { "Synonym: $it" } ?: "Synonym: (not available)"
+        val wordLine = summary.word?.let { "Word: ${it.uppercase()}" }
 
         val parts = mutableListOf<String>()
         if (wordLine != null) parts += wordLine
@@ -419,17 +415,22 @@ class MainActivity : AppCompatActivity() {
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(title)
             .setMessage(parts.joinToString("\n\n"))
-            .setPositiveButton("OK") { d, _ -> d.dismiss() }.show()
+            .setPositiveButton("OK") { d, _ -> d.dismiss() }
+            .show()
     }
 
     private fun showDailyEndDialog(summary: EndGameSummary) {
         val title = if (summary.won) "You solved today's Wordle! 🎉" else "Daily attempt over!"
-        val defLine = summary.definition?.let { "Definition: $it" } ?: "Definition: (not available)"
-        val synLine = summary.synonym?.let { "Synonym: $it" } ?: "Synonym: (not available)"
+        val wordLine = summary.word?.let { "Word: ${it.uppercase()}" } ?: "Word: (unavailable)"
+        val defLine  = summary.definition?.let { "Definition: $it" } ?: "Definition: (not available)"
+        val synLine  = summary.synonym?.let { "Synonym: $it" } ?: "Synonym: (not available)"
+
+        val message = listOf(wordLine, defLine, synLine, "See you again tomorrow!")
+            .joinToString("\n\n")
 
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(title)
-            .setMessage("$defLine\n\n$synLine\n\nSee you again tomorrow!")
+            .setMessage(message)
             .setPositiveButton("OK") { d, _ -> d.dismiss() }
             .show()
     }
