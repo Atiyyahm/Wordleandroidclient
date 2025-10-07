@@ -165,13 +165,13 @@ WordRush follows a three-layer cloud architecture:
 
 | Multi-player mode Selection  | Muti-player with AI | End Game Screens   | Badges  |
 |-----------------|----------------|------------------ |----------------|
-| <img src="images/MutiplayerAi_S1.jpeg" width="250"/> | <img src="images/MutiplayerAi_S2.jpeg" width="250"/> | <img src="images/EndGameScreen.png" width="250"/> |<img src="images/badges.png.png" width="250"/> |
+| <img src="images/MutiplayerAi_S1.jpeg" width="250"/> | <img src="images/MutiplayerAi_S2.jpeg" width="250"/> | <img src="images/EndGameScreen.png" width="250"/> |<img src="https://github.com/Atiyyahm/Wordleandroidclient/blob/master/images/badges.png" width="250"/> |
 
 
 ---
 | Hints  | Navbar | Profile   | Settings   |
 |-----------------|----------------|------------------ |----------------|
-| <img src="images/hints.png" width="250"/> | <img src="images/navbar.png width="250"/> | <img src="images/profile%20screen.png" width="250"/> |<img src="images/settings%20screen.png" width="250"/> |
+| <img src="images/hints.png" width="250"/> | <img src="https://github.com/Atiyyahm/Wordleandroidclient/blob/master/images/navbar.png" width="250"/> | <img src="images/profile%20screen.png" width="250"/> |<img src="images/settings%20screen.png" width="250"/> |
 
 
 ---
