@@ -1,5 +1,5 @@
 <p align="center">
-  <img src= "https://github.com/ST10268917/WordleApp/blob/main/WordRush_Logo.png" width="220" alt="WordRush Logo"/>
+  <img src= "https://github.com/Atiyyahm/Wordleandroidclient/blob/master/WordRush_Logo.png" width="220" alt="WordRush Logo"/>
 </p>
 
 #  WordRush
@@ -149,6 +149,11 @@ WordRush follows a three-layer cloud architecture:
 | **Multiplayer AI** | Play versus smart AI |
 | **Badges/Profile** | View progress and stats |
 | **Settings** | Toggle themes and haptics |
+
+| Welcome | Launch | Register | Login | Dashboard |
+|---------|--------|----------|-------|-----------|
+| <img src="images/welcome%20screen.jpeg" width="250"/> | <img src="images/launch%20screen.jpeg" width="250"/> | <img src="/images/Register.jpeg" width="250"/> | <img src="images/login.jpeg" width="250"/> |<img src="images/Home%20Screen.jpeg" width="250"/> |
+
 
 ---
 
