@@ -1,15 +1,13 @@
-// app/src/main/java/vcmsa/projects/wordleandroidclient/DashboardActivity.kt
 package vcmsa.projects.wordleandroidclient
 
 import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.util.Log
 import android.view.View
 import android.widget.Button
-import android.widget.ImageButton
 import android.widget.RadioGroup
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -21,90 +19,117 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import vcmsa.projects.wordleandroidclient.multiplayer.PlayWithAIActivity
-
 
 class DashboardActivity : AppCompatActivity() {
 
-    // --- Auth ---
     private val auth by lazy { FirebaseAuth.getInstance() }
 
-    // --- Views ---
     private lateinit var tvGreeting: TextView
     private lateinit var chipStreak: TextView
     private lateinit var tvDailyCountdown: TextView
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var btnAI: Button
-
     private lateinit var cardDaily: View
 
-    // --- Countdown to daily reset ---
     private var countdown: CountDownTimer? = null
 
     override fun onStart() {
         super.onStart()
+        Log.e("DASHBOARD", "===== onStart called =====")
         if (auth.currentUser == null) {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
             return
         }
-        // Re-check after coming back from a game
         refreshDailyCardState()
     }
 
-    /** Server+local check, then wire the card’s UI/behavior. */
+    override fun onResume() {
+        super.onResume()
+        Log.e("DASHBOARD", "===== onResume called =====")
+        refreshDailyCardState()
+    }
+
     private fun refreshDailyCardState() {
+        Log.e("DASHBOARD", "refreshDailyCardState started")
         lifecycleScope.launch {
             var played = false
-            try {
-                val resp = vcmsa.projects.wordleandroidclient.api.RetrofitClient.wordService.getToday()
-                val meta = resp.body()
+            val today = getTodayIso()
 
-                if (meta != null) {
-                    if (auth.currentUser != null) {
-                        // Trust server normally, but confirm if it says "played"
-                        played = if (meta.played) {
-                            val confirm = vcmsa.projects.wordleandroidclient.api.RetrofitClient
-                                .wordService.getMyResult(meta.date, meta.lang)
-                            confirm.isSuccessful // 200 only when a result actually exists
-                        } else false
+            try {
+                val user = auth.currentUser
+                if (user != null) {
+                    // 1. Quick local check first (instant)
+                    val localPlayed = vcmsa.projects.wordleandroidclient.data.SettingsStore
+                        .hasUserPlayedToday(this@DashboardActivity, today, user.uid)
+
+                    Log.e("DASHBOARD", "Local check: played=$localPlayed")
+
+                    if (localPlayed) {
+                        played = true
+                        Log.e("DASHBOARD", "Using local result: played=true")
                     } else {
-                        // unsigned: local fallback
-                        val last = vcmsa.projects.wordleandroidclient.data.SettingsStore
-                            .getLastPlayedDate(this@DashboardActivity)
-                        played = (last == meta.date)
+                        // 2. Check Firestore directly
+                        Log.e("DASHBOARD", "Checking Firestore...")
+                        val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                        val docId = "${today}_en-ZA_${user.uid}"
+
+                        try {
+                            val doc = db.collection("results").document(docId).get().await()
+                            val firestorePlayed = doc.exists()
+                            Log.e("DASHBOARD", "Firestore says: played=$firestorePlayed")
+
+                            if (firestorePlayed) {
+                                // Sync local storage
+                                vcmsa.projects.wordleandroidclient.data.SettingsStore
+                                    .setLastPlayedDate(this@DashboardActivity, today, user.uid)
+                                played = true
+                                Log.e("DASHBOARD", "Synced local from Firestore")
+                            } else {
+                                played = false
+                            }
+                        } catch (e: Exception) {
+                            Log.e("DASHBOARD", "Firestore error: ${e.message}")
+                            // On error, trust local
+                            played = localPlayed
+                        }
                     }
-                }
-            } catch (_: Exception) {
-                // offline: only unsigned users have a local signal
-                if (auth.currentUser == null) {
-                    val last = vcmsa.projects.wordleandroidclient.data.SettingsStore
-                        .getLastPlayedDate(this@DashboardActivity)
-                    played = (last == getTodayIso())
                 } else {
-                    played = false
+                    // Unsigned user: only local
+                    val lastPlayed = vcmsa.projects.wordleandroidclient.data.SettingsStore
+                        .getLastPlayedDate(this@DashboardActivity)
+                    played = (lastPlayed == today)
+                    Log.e("DASHBOARD", "Anonymous user: played=$played")
                 }
+            } catch (e: Exception) {
+                Log.e("DASHBOARD", "Error: ${e.message}", e)
+                played = false
             }
+
+            Log.e("DASHBOARD", "***** FINAL: played=$played *****")
             applyDailyCardState(played)
         }
     }
-
-
-    /** Visually dim + show popup if played; else launch Daily game. */
     private fun applyDailyCardState(played: Boolean) {
+        Log.e("DASHBOARD", "applyDailyCardState: played=$played")
         if (played) {
+            Log.e("DASHBOARD", "Setting card to DISABLED state (alpha=0.6)")
             cardDaily.alpha = 0.6f
             cardDaily.setOnClickListener {
+                Log.e("DASHBOARD", "Disabled card clicked - showing dialog")
                 androidx.appcompat.app.AlertDialog.Builder(this)
                     .setTitle("Daily played")
-                    .setMessage("You’ve already played today. Come back tomorrow!")
+                    .setMessage("You've already played today. Come back tomorrow!")
                     .setPositiveButton("OK", null)
                     .show()
             }
         } else {
+            Log.e("DASHBOARD", "Setting card to ENABLED state (alpha=1.0)")
             cardDaily.alpha = 1f
             cardDaily.setOnClickListener {
-                // Launch Daily mode normally
+                Log.e("DASHBOARD", "Enabled card clicked - launching game")
                 startActivity(Intent(this, MainActivity::class.java))
             }
         }
@@ -115,7 +140,6 @@ class DashboardActivity : AppCompatActivity() {
         setContentView(R.layout.activity_dashboard)
         supportActionBar?.hide()
 
-        // --- Bind views ---
         tvGreeting = findViewById(R.id.tvGreeting)
         chipStreak = findViewById(R.id.chipStreak)
         tvDailyCountdown = findViewById(R.id.tvDailyCountdown)
@@ -123,7 +147,6 @@ class DashboardActivity : AppCompatActivity() {
         cardDaily = findViewById(R.id.cardDaily)
         btnAI = findViewById(R.id.btnAI)
 
-        // --- Greeting + streak chip ---
         val user = auth.currentUser
         val fallback = user?.displayName ?: user?.email?.substringBefore("@") ?: "Player"
         tvGreeting.text = "Welcome back, $fallback"
@@ -134,24 +157,6 @@ class DashboardActivity : AppCompatActivity() {
         } else {
             "Start a streak today"
         }
-
-        // --- Quick actions ---
-        findViewById<View>(R.id.qaSpeedle).setOnClickListener {
-            bottomNav.selectedItemId = R.id.nav_speedle
-        }
-        findViewById<View>(R.id.qaMultiplayer).setOnClickListener {
-            bottomNav.selectedItemId = R.id.nav_multiplayer
-        }
-        findViewById<View>(R.id.qaLeaderboard).setOnClickListener {
-            startActivity(
-                Intent(this, LeaderboardActivity::class.java).apply {
-                    putExtra("date", getTodayIso()) // "YYYY-MM-DD"
-                    putExtra("duration", 90)        // default 90; adjust if you want
-                }
-            )
-        }
-
-        findViewById<View>(R.id.qaHowTo).setOnClickListener { showHowToDialog() }
 
         findViewById<View>(R.id.qaSpeedle).setOnClickListener {
             bottomNav.selectedItemId = R.id.nav_speedle
@@ -167,17 +172,14 @@ class DashboardActivity : AppCompatActivity() {
         }
         findViewById<View>(R.id.qaHowTo).setOnClickListener { showHowToDialog() }
 
-
         btnAI.setOnClickListener {
             startActivity(Intent(this, PlayWithAIActivity::class.java))
         }
 
-        // --- Speedle selector on the Speedle card ---
         val rg = findViewById<RadioGroup>(R.id.rgSpeedle).apply {
-            check(R.id.rb90) // default selection
+            check(R.id.rb90)
         }
 
-        // Tap the Speedle card to start with the selected duration
         findViewById<View>(R.id.cardSpeedle).setOnClickListener {
             val seconds = when (rg.checkedRadioButtonId) {
                 R.id.rb60  -> 60
@@ -186,54 +188,44 @@ class DashboardActivity : AppCompatActivity() {
             }
             startActivity(
                 Intent(this, MainActivity::class.java).apply {
-                    putExtra("mode", "SPEEDLE")   // <-- uppercase so MainActivity recognizes it
+                    putExtra("mode", "SPEEDLE")
                     putExtra("seconds", seconds)
                 }
             )
         }
 
-        // --- Bottom navigation routing ---
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.nav_home -> true // already here
-
+                R.id.nav_home -> true
                 R.id.nav_speedle -> {
-                    // Show quick chooser for 60/90/120
                     showSpeedleDurationChooser()
                     true
                 }
-
                 R.id.nav_multiplayer -> {
-                    startActivity(Intent(this, vcmsa.projects.wordleandroidclient.multiplayer.PlayWithAIActivity::class.java))
+                    startActivity(Intent(this, PlayWithAIActivity::class.java))
                     true
                 }
-
                 R.id.nav_leaderboard -> {
                     showComingSoon("Leaderboard")
                     true
                 }
-
                 R.id.nav_profile -> {
                     startActivity(Intent(this, ProfileActivity::class.java))
                     true
                 }
-
                 else -> false
             }
         }
         bottomNav.selectedItemId = R.id.nav_home
 
-        // --- Daily reset countdown (to midnight local) ---
         startResetCountdown()
-
-        // First wiring of the Daily card
         refreshDailyCardState()
     }
 
     private fun showComingSoon(feature: String) {
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("$feature")
-            .setMessage("Coming soon ")
+            .setMessage("Coming soon")
             .setPositiveButton("OK", null)
             .show()
     }
@@ -246,7 +238,7 @@ class DashboardActivity : AppCompatActivity() {
             .setItems(durations) { _, which ->
                 startActivity(
                     Intent(this, MainActivity::class.java).apply {
-                        putExtra("mode", "SPEEDLE")   // <-- uppercase
+                        putExtra("mode", "SPEEDLE")
                         putExtra("seconds", options[which])
                     }
                 )
@@ -293,9 +285,6 @@ class DashboardActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    // -------- Helpers --------
-
-    /** Returns today's date as ISO yyyy-MM-dd without needing java.time/desugaring. */
     private fun getTodayIso(): String {
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
         return sdf.format(Date())

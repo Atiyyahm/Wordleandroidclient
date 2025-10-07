@@ -176,9 +176,17 @@ class WordleViewModel(
         }
     }
 
-    // ONLY keep this version - remove the suspend one
     private fun loadMyResultAndRender(body: MyResultResponse, length: Int) {
         _isLoadingPreviousResult.value = true
+
+        // ADD THIS LOGGING:
+        Log.e("LOAD_PREVIOUS", "==========================================")
+        Log.e("LOAD_PREVIOUS", "Loading previous result:")
+        Log.e("LOAD_PREVIOUS", "Guesses: ${body.guesses}")
+        Log.e("LOAD_PREVIOUS", "Feedback rows: ${body.feedbackRows}")
+        Log.e("LOAD_PREVIOUS", "Won: ${body.won}")
+        Log.e("LOAD_PREVIOUS", "Answer: ${body.answer}")
+        Log.e("LOAD_PREVIOUS", "==========================================")
 
         resetBoard(len = length)
 
@@ -193,7 +201,7 @@ class WordleViewModel(
 
         viewModelScope.launch {
             val def = runCatching { wordApi.getDefinition(body.lang, body.date).body()?.definition?.definition }.getOrNull()
-            val syn = runCatching { wordApi.getSynonym  (body.lang, body.date).body()?.synonym }.getOrNull()
+            val syn = runCatching { wordApi.getSynonym(body.lang, body.date).body()?.synonym }.getOrNull()
             _summary.value = EndGameSummary(
                 definition = def,
                 synonym = syn,
@@ -519,11 +527,16 @@ class WordleViewModel(
                             val guesses = collectGuessesSoFar()
                             val feedbackRows = extractFeedbackRows()
 
-                            // Submit and get the answer:
+                            // Write to Firestore directly
+                            writeResultToFirestore(won = true)
+
+                            // Also submit to backend (for stats/leaderboard)
                             val answer = submitDailyResult(won = true)
 
+                            val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: "anonymous"
+
                             _today.value?.date?.let {
-                                SettingsStore.setLastPlayedDate(appContext, it)
+                                SettingsStore.setLastPlayedDate(appContext, it, userId)
                                 SettingsStore.saveLastGameState(appContext, guesses, feedbackRows)
                             }
 
@@ -542,7 +555,6 @@ class WordleViewModel(
             }
         }
     }
-
     private fun submitGuessSpeedle(start: Int, guess: String) {
         val sessionId = speedleSessionId ?: return
         viewModelScope.launch {
@@ -589,7 +601,37 @@ class WordleViewModel(
         }
         _boardStates.value = newStates
     }
+    private suspend fun writeResultToFirestore(won: Boolean) {
+        try {
+            val user = FirebaseAuth.getInstance().currentUser ?: return
+            val meta = _today.value ?: return
+            val guesses = collectGuessesSoFar()
+            val feedbackRows = extractFeedbackRows()
 
+            val db = FirebaseFirestore.getInstance()
+            val docId = "${meta.date}_${meta.lang}_${user.uid}"
+
+            val payload = hashMapOf(
+                "uid" to user.uid,
+                "date" to meta.date,
+                "lang" to meta.lang,
+                "mode" to "daily",
+                "guesses" to guesses,
+                "feedbackRows" to feedbackRows,
+                "won" to won,
+                "guessCount" to guesses.size,
+                "durationSec" to 0,
+                "submittedAt" to FieldValue.serverTimestamp()
+            )
+
+            Log.e("WordleVM", "Writing to Firestore: $docId")
+            db.collection("results").document(docId).set(payload).await()
+            Log.e("WordleVM", "✅ Successfully wrote to Firestore")
+
+        } catch (e: Exception) {
+            Log.e("WordleVM", "❌ Firestore write failed: ${e.message}", e)
+        }
+    }
     private fun advanceOrLoseDaily() {
         if (currentGuessRow < 5) {
             currentGuessRow++
@@ -602,10 +644,16 @@ class WordleViewModel(
             val guesses = collectGuessesSoFar()
             val feedbackRows = extractFeedbackRows()
 
+            // MOVE THIS LINE HERE (before the viewModelScope.launch)
+            val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: "anonymous"
+
             viewModelScope.launch {
+                writeResultToFirestore(won = false)
+
                 submitDailyResult(won = false)
+
                 todayDate?.let {
-                    SettingsStore.setLastPlayedDate(appContext, it)
+                    SettingsStore.setLastPlayedDate(appContext, it, userId)  // NOW userId is in scope
                     SettingsStore.saveLastGameState(appContext, guesses, feedbackRows)
                 }
 
@@ -619,7 +667,6 @@ class WordleViewModel(
             }
         }
     }
-
     private fun loadEndSummaryDaily(won: Boolean, word: String?) {
         val meta = _today.value ?: return
         viewModelScope.launch {
@@ -653,6 +700,33 @@ class WordleViewModel(
                     _gameState.value = GameState.LOST
                     loadEndSummaryDaily(false, null)
                 }
+            }
+        }
+    }
+    fun testFirestoreWrite() {
+        viewModelScope.launch {
+            try {
+                val user = FirebaseAuth.getInstance().currentUser
+                if (user == null) {
+                    Log.e("FIRESTORE_TEST", "❌ No user signed in")
+                    return@launch
+                }
+
+                Log.e("FIRESTORE_TEST", "✅ User signed in: ${user.uid}")
+
+                val db = FirebaseFirestore.getInstance()
+                val testDoc = hashMapOf(
+                    "test" to "Hello from app",
+                    "timestamp" to FieldValue.serverTimestamp(),
+                    "userId" to user.uid
+                )
+
+                Log.e("FIRESTORE_TEST", "Writing test document...")
+                db.collection("test_collection").document("test_doc").set(testDoc).await()
+                Log.e("FIRESTORE_TEST", "✅✅✅ Successfully wrote to Firestore!")
+
+            } catch (e: Exception) {
+                Log.e("FIRESTORE_TEST", "❌❌❌ Firestore write failed: ${e.message}", e)
             }
         }
     }

@@ -2,7 +2,6 @@
 package vcmsa.projects.wordleandroidclient.data
 
 import android.content.Context
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -38,18 +37,41 @@ object SettingsStore {
         ctx.dataStore.edit { it[SOUNDS] = v }
     }
 
-    // -------- Daily lock + saved game state (device fallback for unsigned users) --------
+    // -------- Daily lock + saved game state (PER USER tracking) --------
     private val LAST_PLAYED_DATE   = stringPreferencesKey("last_played_date")
-    private val LAST_GUESSES       = stringPreferencesKey("last_game_guesses")       // e.g. "CRANE|BREAD|SMILE"
-    private val LAST_FEEDBACK_ROWS = stringPreferencesKey("last_game_feedback_rows") // e.g. "AYAAG|GAGAA|GYYGA"
+    private val LAST_PLAYED_USER   = stringPreferencesKey("last_played_user")  // NEW: Track which user played
+    private val LAST_GUESSES       = stringPreferencesKey("last_game_guesses")
+    private val LAST_FEEDBACK_ROWS = stringPreferencesKey("last_game_feedback_rows")
 
-    /** The YYYY-MM-DD date of the last daily game finished on this device (unsigned fallback). */
+    /**
+     * Store that a specific user played on a specific date.
+     * This allows different users to play on the same device.
+     */
+    suspend fun setLastPlayedDate(ctx: Context, date: String, userId: String) {
+        ctx.dataStore.edit {
+            it[LAST_PLAYED_DATE] = date
+            it[LAST_PLAYED_USER] = userId
+        }
+    }
+
+    /**
+     * Check if THIS specific user has already played on this date.
+     * Returns true only if the stored date matches AND the stored user matches.
+     */
+    suspend fun hasUserPlayedToday(ctx: Context, date: String, userId: String): Boolean {
+        val prefs = ctx.dataStore.data.first()
+        val lastDate = prefs[LAST_PLAYED_DATE]
+        val lastUser = prefs[LAST_PLAYED_USER]
+
+        return lastDate == date && lastUser == userId
+    }
+
+    /**
+     * Legacy function for backwards compatibility (unsigned users or old code).
+     * Returns the last played date without checking user.
+     */
     suspend fun getLastPlayedDate(ctx: Context): String? =
         ctx.dataStore.data.map { it[LAST_PLAYED_DATE] }.first()
-
-    suspend fun setLastPlayedDate(ctx: Context, date: String) {
-        ctx.dataStore.edit { it[LAST_PLAYED_DATE] = date }
-    }
 
     /**
      * Save the local board so we can render it later if user isn't signed in.
