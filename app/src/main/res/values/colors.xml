@@ -21,6 +21,12 @@
     <color name="yellow_daily">#FFD700</color>
     <color name="icon_tint">#FFD5D7DA</color>
 
+    <color name="bg_start">#F7F9FF</color>
+    <color name="bg_end">#FFFFFF</color>
+    <color name="card_bg">#EEF2FA</color>
+    <color name="text_primary">#10131A</color>
+    <color name="text_secondary">#3B577C</color>
+
     <color name="wordrush_correct">#6AAA64</color>   <!-- green -->
     <color name="wordrush_present">#C9B458</color>  <!-- yellow -->
     <color name="wordrush_absent">#787C7E</color>   <!-- dark grey -->

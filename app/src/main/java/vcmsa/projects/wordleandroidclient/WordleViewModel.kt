@@ -4,23 +4,28 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import vcmsa.projects.wordleandroidclient.api.*
-
-
-
-
+import vcmsa.projects.wordleandroidclient.data.SettingsStore
 
 class WordleViewModel(
     private val wordApi: WordApiService,
     private val speedleApi: SpeedleApiService,
     private val appContext: Context
 ) : ViewModel() {
+    private val _isLoadingPreviousResult = MutableStateFlow(false)
+    val isLoadingPreviousResult: StateFlow<Boolean> = _isLoadingPreviousResult
 
     // ---- Mode (Daily vs Speedle) ----
     private val _mode = MutableStateFlow(GameMode.DAILY)
@@ -93,55 +98,164 @@ class WordleViewModel(
         speedleWordId = null
     }
 
+    //Haptics functions
+    private fun hapticTick() {
+        viewModelScope.launch {
+            if (vcmsa.projects.wordleandroidclient.data.SettingsStore.hapticsFlow(appContext).first()) {
+                Haptics.tick(appContext)
+            }
+        }
+    }
+
+    private fun hapticSuccess() {
+        viewModelScope.launch {
+            if (vcmsa.projects.wordleandroidclient.data.SettingsStore.hapticsFlow(appContext).first()) {
+                Haptics.success(appContext)
+            }
+        }
+    }
+
     fun loadDailyWord() {
         _gameState.value = GameState.LOADING
         viewModelScope.launch {
             try {
                 val resp = wordApi.getToday()
                 val meta = resp.body()
-                if (resp.isSuccessful && meta != null) {
-                    _today.value = meta
+                if (!resp.isSuccessful || meta == null) {
+                    Log.e("WordleVM","getToday failed: ${resp.code()} ${resp.message()}")
+                    _userMessage.value = "Couldn't load today's word."
+                    _gameState.value = GameState.ERROR
+                    return@launch
+                }
+                _today.value = meta
 
-                    if (meta.played) {
-                        // Already played → fetch stored board and lock
-                        loadMyResultAndRender(meta.date, meta.lang)
-                    } else {
-                        // Fresh board
-                        speedleLength = null
-                        resetBoard(meta.length)
-                        _gameState.value = GameState.PLAYING
+                val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+
+                // 1) Server-authoritative lock if signed in
+                if (user != null) {
+                    val r = wordApi.getMyResult(date = meta.date, lang = meta.lang)
+                    if (r.isSuccessful && r.body() != null) {
+                        loadMyResultAndRender(r.body()!!, meta.length)
+                        return@launch
                     }
                 } else {
-                    Log.e("WordleVM", "getToday failed: ${resp.code()} ${resp.message()}")
-                    _userMessage.value = "Couldn’t load today’s word."
-                    _gameState.value = GameState.ERROR
+                    // 2) Device-only fallback
+                    val last = SettingsStore.getLastPlayedDate(appContext)
+                    if (last == meta.date) {
+                        // Load saved game state
+                        val savedState = SettingsStore.getLastGameState(appContext)
+                        if (savedState != null) {
+                            val (guesses, feedbackRows) = savedState
+                            resetBoard(meta.length)
+
+                            guesses.forEachIndexed { row, guess ->
+                                writeGuessRow(row, guess.uppercase())
+                                val fb = feedbackRows.getOrNull(row) ?: emptyList()
+                                if (fb.isNotEmpty()) applyFeedbackRow(row, fb)
+                            }
+                        } else {
+                            resetBoard(meta.length)
+                        }
+
+                        _gameState.value = GameState.LOST
+                        _userMessage.value = "You've already played today. Come back tomorrow!"
+                        return@launch
+                    }
                 }
+
+                // Fresh board
+                speedleLength = null
+                resetBoard(meta.length)
+                _gameState.value = GameState.PLAYING
+
             } catch (e: Exception) {
-                Log.e("WordleVM", "getToday error", e)
+                Log.e("WordleVM","getToday error", e)
                 _userMessage.value = "Network error. Try again."
                 _gameState.value = GameState.ERROR
             }
         }
     }
 
+    // ONLY keep this version - remove the suspend one
+    private fun loadMyResultAndRender(body: MyResultResponse, length: Int) {
+        _isLoadingPreviousResult.value = true
 
-    /** Send today's result to the server so the user is locked for the day. */
+        resetBoard(len = length)
+
+        body.guesses.forEachIndexed { row, guess ->
+            writeGuessRow(row, guess.uppercase())
+            val fb = body.feedbackRows.getOrNull(row) ?: emptyList()
+            if (fb.isNotEmpty()) applyFeedbackRow(row, fb)
+        }
+
+        _gameState.value = if (body.won) GameState.WON else GameState.LOST
+        _userMessage.value = "You've already played today. Come back tomorrow!"
+
+        _isLoadingPreviousResult.value = false
+    }
+
     private suspend fun submitDailyResult(won: Boolean) {
         val meta = _today.value ?: return
         val guesses = collectGuessesSoFar()
-        runCatching {
-            wordApi.submitDaily(
+
+        try {
+            val resp = wordApi.submitDaily(
                 SubmitDailyRequest(
                     date = meta.date,
                     lang = meta.lang,
                     guesses = guesses,
                     won = won,
-                    durationSec = null,   // (optional) add if you track time
-                    clientId = null       // (optional) add if you generate an idempotency key
+                    durationSec = null,
+                    clientId = null
                 )
             )
+
+            if (!resp.isSuccessful) {
+                Log.e("WordleVM", "submitDaily failed: ${resp.code()} ${resp.message()}")
+                // Ensure dashboard gating still works:
+                writeResultDocFallback(meta.date, meta.lang, won, guesses)
+            }
+        } catch (e: Exception) {
+            Log.e("WordleVM", "submitDaily error", e)
+            // Ensure dashboard gating still works:
+            writeResultDocFallback(meta.date, meta.lang, won, guesses)
         }
     }
+
+    private suspend fun writeResultDocFallback(
+        date: String,
+        lang: String,
+        won: Boolean,
+        guesses: List<String>
+    ) {
+        try {
+            val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+            val db = FirebaseFirestore.getInstance()
+            val docId = "${date}_${lang}_${uid}"
+
+            val feedbackRows = extractFeedbackRows() // already in this class
+
+            val payload = hashMapOf(
+                "uid" to uid,
+                "date" to date,
+                "lang" to lang,
+                "mode" to "daily",
+                "guesses" to guesses,
+                "feedbackRows" to feedbackRows,
+                "won" to won,
+                "guessCount" to guesses.size,
+                "durationSec" to 0,
+                "clientFallback" to true, // flag so you can see it came from the app
+                "submittedAt" to FieldValue.serverTimestamp()
+            )
+
+            db.collection("results").document(docId).set(payload, SetOptions.merge()).await()
+            Log.d("WordleVM", "Fallback results doc written: $docId")
+        } catch (e: Exception) {
+            Log.e("WordleVM", "Fallback write failed", e)
+        }
+    }
+
 
     private fun writeGuessRow(rowIndex: Int, guess: String) {
         val len = guess.length
@@ -156,7 +270,6 @@ class WordleViewModel(
                 for (i in 0 until len) this[start + i] = TileState.FILLED
             }
         }
-        // keep internal cursors in sync so UI looks consistent
         currentGuessRow = rowIndex
         currentPosition = start + len
     }
@@ -177,32 +290,9 @@ class WordleViewModel(
         }
     }
 
-    private suspend fun loadMyResultAndRender(date: String, lang: String) {
-        val resp = wordApi.getMyResult(date = date, lang = lang)
-        if (!resp.isSuccessful) {
-            // Token problem or result not found — fail closed (lock input)
-            _gameState.value = GameState.LOST
-            _userMessage.value = "You’ve already played today. Come back tomorrow!"
-            return
-        }
-        val body = resp.body() ?: return
-        // reset board to the correct width
-        resetBoard(len = (body.guesses.firstOrNull()?.length ?: 5))
-
-        body.guesses.forEachIndexed { row, guess ->
-            writeGuessRow(row, guess.uppercase())
-            val fb = body.feedbackRows.getOrNull(row) ?: emptyList()
-            if (fb.isNotEmpty()) applyFeedbackRow(row, fb)
-        }
-
-        // Lock the board by moving to a terminal state
-        _gameState.value = if (body.won) GameState.WON else GameState.LOST
-        _userMessage.value = "You’ve already played today. Come back tomorrow!"
-    }
-
     private fun collectGuessesSoFar(): List<String> {
         val len = currentLen
-        val rowsUsed = currentGuessRow + 1  // row index is 0-based
+        val rowsUsed = currentGuessRow + 1
         val result = mutableListOf<String>()
         for (row in 0 until rowsUsed) {
             val start = row * len
@@ -215,8 +305,24 @@ class WordleViewModel(
         return result
     }
 
-
-
+    private fun extractFeedbackRows(): List<List<String>> {
+        val len = currentLen
+        val result = mutableListOf<List<String>>()
+        for (row in 0..currentGuessRow) {
+            val start = row * len
+            val rowFeedback = mutableListOf<String>()
+            for (i in 0 until len) {
+                rowFeedback.add(when (_boardStates.value[start + i]) {
+                    TileState.CORRECT -> "G"
+                    TileState.PRESENT -> "Y"
+                    TileState.ABSENT -> "A"
+                    else -> "A"
+                })
+            }
+            result.add(rowFeedback)
+        }
+        return result
+    }
 
     // ---------- SPEEDLE ----------
 
@@ -229,7 +335,7 @@ class WordleViewModel(
                 val startResp = speedleApi.start(SpeedleStartRequest(durationSec = durationSec))
                 val body = startResp.body()
                 if (!startResp.isSuccessful || body == null) {
-                    _userMessage.value = "Couldn’t start Speedle."
+                    _userMessage.value = "Couldn't start Speedle."
                     _gameState.value = GameState.ERROR
                     return@launch
                 }
@@ -258,7 +364,6 @@ class WordleViewModel(
         }
     }
 
-    /** Finish Speedle → server + local stats */
     private fun finishSpeedle(endReason: String) {
         val sessionId = speedleSessionId ?: return
         val wordId = speedleWordId
@@ -278,10 +383,14 @@ class WordleViewModel(
 
                 val body = resp.body()
                 if (body != null) {
-                    _summary.value = EndGameSummary(body.definition, body.synonym, body.won)
+                    _summary.value = EndGameSummary(
+                        definition = body.definition,
+                        synonym = body.synonym,
+                        won = body.won,
+                        word = body.answer?.uppercase()
+                    )
                     _gameState.value = if (body.won) GameState.WON else GameState.LOST
 
-                    // ✅ record locally via SpeedleStatsManager
                     SpeedleStatsManager.recordRun(
                         context = appContext,
                         won = body.won,
@@ -316,7 +425,7 @@ class WordleViewModel(
                     _remainingSeconds.value = body.remainingSec
                     _hintMessage.value = body.definition ?: "No hint available."
                 } else {
-                    _userMessage.value = "Couldn’t use hint."
+                    _userMessage.value = "Couldn't use hint."
                 }
             } catch (e: Exception) {
                 _userMessage.value = "Network error. Try again."
@@ -348,6 +457,8 @@ class WordleViewModel(
                 list.toMutableList().apply { this[currentPosition] = TileState.FILLED }
             }
             currentPosition++
+            hapticTick()
+
         }
     }
 
@@ -386,7 +497,6 @@ class WordleViewModel(
         }
     }
 
-    // ----- DAILY submit -----
     private fun submitGuessDaily(start: Int, guess: String) {
         val meta = _today.value ?: return
         viewModelScope.launch {
@@ -399,11 +509,16 @@ class WordleViewModel(
                         applyFeedbackToRow(start, body.feedback)
                         if (body.won) {
                             _gameState.value = GameState.WON
-                            stopTimer()
+                            hapticSuccess()
 
+                            val guesses = collectGuessesSoFar()
+                            val feedbackRows = extractFeedbackRows()
 
-                            // fire-and-forget submit
-                            viewModelScope.launch { submitDailyResult(won = true) }
+                            submitDailyResult(won = true)
+                            _today.value?.date?.let {
+                                SettingsStore.setLastPlayedDate(appContext, it)
+                                SettingsStore.saveLastGameState(appContext, guesses, feedbackRows)
+                            }
 
                             loadEndSummaryDaily(true)
                         } else {
@@ -421,7 +536,6 @@ class WordleViewModel(
         }
     }
 
-    // ----- SPEEDLE submit -----
     private fun submitGuessSpeedle(start: Int, guess: String) {
         val sessionId = speedleSessionId ?: return
         viewModelScope.launch {
@@ -476,12 +590,23 @@ class WordleViewModel(
         } else {
             _gameState.value = GameState.LOST
             stopTimer()
-            viewModelScope.launch { submitDailyResult(won = false) }
+
+            val todayDate = _today.value?.date
+            val guesses = collectGuessesSoFar()
+            val feedbackRows = extractFeedbackRows()
+
+            viewModelScope.launch {
+                submitDailyResult(won = false)
+                todayDate?.let {
+                    SettingsStore.setLastPlayedDate(appContext, it)
+                    SettingsStore.saveLastGameState(appContext, guesses, feedbackRows)
+                }
+            }
+
             loadEndSummaryDaily(false)
         }
     }
 
-    // ---------- DAILY summary ----------
     private fun loadEndSummaryDaily(won: Boolean) {
         val meta = _today.value ?: return
         viewModelScope.launch {
@@ -495,7 +620,6 @@ class WordleViewModel(
         }
     }
 
-    // ---------- Timer helpers ----------
     private fun startTimer() {
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
@@ -525,7 +649,6 @@ class WordleViewModel(
         stopTimer()
     }
 
-    // --- Daily hint helpers ---
     fun revealDefinitionHint() {
         viewModelScope.launch {
             val meta = _today.value ?: return@launch
@@ -534,25 +657,21 @@ class WordleViewModel(
                 if (resp.isSuccessful) {
                     _hintMessage.value = resp.body()?.definition?.definition ?: "No definition found."
                 } else {
-                    _userMessage.value = "Couldn’t load definition."
+                    _userMessage.value = "Couldn't load definition."
                 }
             } catch (e: Exception) {
                 _userMessage.value = "Network error."
             }
         }
     }
-    // --- Public helpers for local/multiplayer flows ---
 
-    /** Returns the current row index (0..5). */
     fun currentRow(): Int = currentGuessRow
 
-    /** Returns true if the current row is fully filled for the given len. */
     fun isCurrentRowFilled(len: Int = currentLen): Boolean {
         val end = (currentGuessRow + 1) * len
         return currentPosition >= end
     }
 
-    /** Returns the current row guess (uppercase) if filled, else null. */
     fun getCurrentRowGuess(len: Int = currentLen): String? {
         val start = currentGuessRow * len
         val end = start + len
@@ -560,24 +679,20 @@ class WordleViewModel(
         return _boardLetters.value.subList(start, end).joinToString("").uppercase()
     }
 
-    /**
-     * Apply local feedback codes (["G","Y","A"]) to the current row and advance.
-     * Returns true if this row is a win (all "G"), false otherwise.
-     */
     fun applyLocalFeedbackAndAdvance(codes: List<String>): Boolean {
         val len = currentLen
         val start = currentGuessRow * len
-        applyFeedbackToRow(start, codes) // existing private method
+        applyFeedbackToRow(start, codes)
 
         val won = codes.all { it == "G" }
         if (won) {
             _gameState.value = GameState.WON
+            hapticSuccess()
         } else {
-            advanceOrLoseDaily() // uses same 6-row flow
+            advanceOrLoseDaily()
         }
         return won
     }
-
 
     fun clearHint() {
         _hintMessage.value = null

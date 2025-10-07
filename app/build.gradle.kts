@@ -74,4 +74,7 @@ dependencies {
     implementation("nl.dionsegijn:konfetti-xml:2.0.2")
 //  Lottie countdown JSON
     implementation("com.airbnb.android:lottie:6.4.0")
+
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
 }

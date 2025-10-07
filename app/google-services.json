@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "598667406883-9m60b3etnif36nv7uu2gfmfomldo0s43.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "vcmsa.projects.wordleandroidclient",
+            "certificate_hash": "d4f67825ee95e18edc3053a1aad8e099af4594f8"
+          }
+        },
+        {
           "client_id": "598667406883-t8sc1r6cb53grc4ug64p981pkni99qoh.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
@@ -34,18 +35,21 @@ class LoginActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
             try {
-                val account = task.result
+                val account = task.getResult(ApiException::class.java)
                 val idToken = account.idToken
-                if (idToken != null) {
-                    val cred = GoogleAuthProvider.getCredential(idToken, null)
-                    auth.signInWithCredential(cred).await()
-                    ensureProfile()
-                    goToDashboard()
-                } else {
-                    toast("Google sign-in failed")
+                if (idToken.isNullOrBlank()) {
+                    toast("Google sign-in failed: idToken null. Check SHA-1/256 + web client id.")
+                    return@launch
                 }
+                val cred = GoogleAuthProvider.getCredential(idToken, null)
+                auth.signInWithCredential(cred).await()
+                ensureProfile()
+                goToDashboard()
+            } catch (e: ApiException) {
+                // Common: 10 (DEVELOPER_ERROR), 12500 (config), 7 (network), 12501 (canceled)
+                toast("Google sign-in error: status=${e.statusCode}")
             } catch (e: Exception) {
-                toast("Google sign-in error")
+                toast("Google sign-in error: ${e.localizedMessage}")
             }
         }
     }

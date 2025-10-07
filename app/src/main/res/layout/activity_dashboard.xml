@@ -26,14 +26,6 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"/>
-
-        <ImageButton
-            android:id="@+id/btnAvatar"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="Profile"
-            app:srcCompat="@drawable/ic_profile" />
     </com.google.android.material.appbar.MaterialToolbar>
 
     <!-- Content -->
@@ -55,7 +47,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Welcome back, Player"
-                android:textColor="@android:color/white"
+                android:textColor="@color/text_primary"
                 android:textStyle="bold"
                 android:textSize="24sp"/>
 
@@ -100,7 +92,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Speedle"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/text_primary"
                             android:layout_marginTop="4dp"/>
                     </LinearLayout>
 
@@ -119,7 +111,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Multiplayer"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/text_primary"
                             android:layout_marginTop="4dp"/>
                     </LinearLayout>
 
@@ -138,7 +130,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Leaderboard"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/text_primary"
                             android:layout_marginTop="4dp"/>
                     </LinearLayout>
 
@@ -157,7 +149,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Stats"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/text_primary"
                             android:layout_marginTop="4dp"/>
                     </LinearLayout>
 
@@ -176,7 +168,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="How to Play"
-                            android:textColor="@android:color/white"
+                            android:textColor="@color/text_primary"
                             android:layout_marginTop="4dp"/>
                     </LinearLayout>
 
@@ -331,16 +323,6 @@
                 android:orientation="horizontal"
                 android:layout_marginTop="18dp">
 
-                <TextView
-                    android:id="@+id/pillHowTo"
-                    style="@style/WrPill"
-                    android:text="How to Play"/>
-
-                <TextView
-                    android:id="@+id/pillBadges"
-                    style="@style/WrPill"
-                    android:text="Badges"
-                    android:layout_marginStart="8dp"/>
             </LinearLayout>
 
         </LinearLayout>

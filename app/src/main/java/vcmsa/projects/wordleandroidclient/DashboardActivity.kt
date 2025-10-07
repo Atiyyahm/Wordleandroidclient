@@ -18,6 +18,9 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -30,6 +33,8 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var tvDailyCountdown: TextView
     private lateinit var bottomNav: BottomNavigationView
 
+    private lateinit var cardDaily: View
+
     // --- Countdown to daily reset ---
     private var countdown: CountDownTimer? = null
 
@@ -38,6 +43,67 @@ class DashboardActivity : AppCompatActivity() {
         if (auth.currentUser == null) {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
+            return
+        }
+        // Re-check after coming back from a game
+        refreshDailyCardState()
+    }
+
+    /** Server+local check, then wire the card’s UI/behavior. */
+    private fun refreshDailyCardState() {
+        lifecycleScope.launch {
+            var played = false
+            try {
+                val resp = vcmsa.projects.wordleandroidclient.api.RetrofitClient.wordService.getToday()
+                val meta = resp.body()
+
+                if (meta != null) {
+                    if (auth.currentUser != null) {
+                        // Trust server normally, but confirm if it says "played"
+                        played = if (meta.played) {
+                            val confirm = vcmsa.projects.wordleandroidclient.api.RetrofitClient
+                                .wordService.getMyResult(meta.date, meta.lang)
+                            confirm.isSuccessful // 200 only when a result actually exists
+                        } else false
+                    } else {
+                        // unsigned: local fallback
+                        val last = vcmsa.projects.wordleandroidclient.data.SettingsStore
+                            .getLastPlayedDate(this@DashboardActivity)
+                        played = (last == meta.date)
+                    }
+                }
+            } catch (_: Exception) {
+                // offline: only unsigned users have a local signal
+                if (auth.currentUser == null) {
+                    val last = vcmsa.projects.wordleandroidclient.data.SettingsStore
+                        .getLastPlayedDate(this@DashboardActivity)
+                    played = (last == getTodayIso())
+                } else {
+                    played = false
+                }
+            }
+            applyDailyCardState(played)
+        }
+    }
+
+
+    /** Visually dim + show popup if played; else launch Daily game. */
+    private fun applyDailyCardState(played: Boolean) {
+        if (played) {
+            cardDaily.alpha = 0.6f
+            cardDaily.setOnClickListener {
+                androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Daily played")
+                    .setMessage("You’ve already played today. Come back tomorrow!")
+                    .setPositiveButton("OK", null)
+                    .show()
+            }
+        } else {
+            cardDaily.alpha = 1f
+            cardDaily.setOnClickListener {
+                // Launch Daily mode normally
+                startActivity(Intent(this, MainActivity::class.java))
+            }
         }
     }
 
@@ -46,16 +112,12 @@ class DashboardActivity : AppCompatActivity() {
         setContentView(R.layout.activity_dashboard)
         supportActionBar?.hide()
 
-        // --- Top bar avatar -> Profile ---
-        findViewById<ImageButton>(R.id.btnAvatar).setOnClickListener {
-            startActivity(Intent(this, ProfileActivity::class.java))
-        }
-
         // --- Bind views ---
         tvGreeting = findViewById(R.id.tvGreeting)
         chipStreak = findViewById(R.id.chipStreak)
         tvDailyCountdown = findViewById(R.id.tvDailyCountdown)
         bottomNav = findViewById(R.id.bottomNav)
+        cardDaily = findViewById(R.id.cardDaily)
 
         // --- Greeting + streak chip ---
         val user = auth.currentUser
@@ -67,11 +129,6 @@ class DashboardActivity : AppCompatActivity() {
             "🔥 ${stats.currentStreak}-day streak"
         } else {
             "Start a streak today"
-        }
-
-        // --- Daily card -> MainActivity (Daily mode) ---
-        findViewById<View>(R.id.cardDaily).setOnClickListener {
-            startActivity(Intent(this, MainActivity::class.java))
         }
 
         // --- Quick actions ---
@@ -90,9 +147,9 @@ class DashboardActivity : AppCompatActivity() {
             )
         }
 
-        findViewById<View>(R.id.qaHowTo).setOnClickListener {
-            Toast.makeText(this, "How to Play coming soon", Toast.LENGTH_SHORT).show()
-        }
+        findViewById<View>(R.id.qaHowTo).setOnClickListener { showHowToDialog() }
+
+
 
         // --- Speedle selector on the Speedle card ---
         val rg = findViewById<RadioGroup>(R.id.rgSpeedle).apply {
@@ -154,7 +211,11 @@ class DashboardActivity : AppCompatActivity() {
 
         // --- Daily reset countdown (to midnight local) ---
         startResetCountdown()
+
+        // First wiring of the Daily card
+        refreshDailyCardState()
     }
+
 
     private fun showSpeedleDurationChooser() {
         val durations = arrayOf("60 seconds", "90 seconds", "120 seconds")
@@ -169,6 +230,14 @@ class DashboardActivity : AppCompatActivity() {
                     }
                 )
             }
+            .show()
+    }
+
+    private fun showHowToDialog() {
+        val view = layoutInflater.inflate(R.layout.dialog_how_to_play, null)
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setView(view)
+            .setPositiveButton("Got it") { d, _ -> d.dismiss() }
             .show()
     }
 

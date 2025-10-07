@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
@@ -92,6 +93,44 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Timer display observer
+        lifecycleScope.launch {
+            viewModel.remainingSeconds.collect { seconds ->
+                val timerView = findViewById<TextView>(R.id.tvSpeedleTimer)
+
+                // Only show timer in Speedle mode
+                if (seconds != null && viewModel.mode.value == GameMode.SPEEDLE) {
+                    timerView?.visibility = android.view.View.VISIBLE
+                    val mins = seconds / 60
+                    val secs = seconds % 60
+                    timerView?.text = String.format("%d:%02d", mins, secs)
+
+                    // Change color when time is low
+                    if (seconds <= 10) {
+                        timerView?.setTextColor(android.graphics.Color.RED)
+                    } else {
+                        timerView?.setTextColor(android.graphics.Color.parseColor("#333333"))
+                    }
+                } else {
+                    // Hide timer in Daily/AI/Friends modes
+                    timerView?.visibility = android.view.View.GONE
+                }
+            }
+        }
+
+// Pre-countdown display (3...2...1... before timer starts)
+        lifecycleScope.launch {
+            viewModel.preCountdownSeconds.collect { seconds ->
+                if (seconds != null && seconds > 0) {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "Starting in $seconds...",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+
         // --- End-of-game summary dialogs ---
         lifecycleScope.launch {
             viewModel.summary.collect { summary ->
@@ -106,10 +145,13 @@ class MainActivity : AppCompatActivity() {
         }
         lifecycleScope.launch {
             viewModel.gameState.collect { state ->
-                when (state) {
-                    GameState.WON  -> StatsManager.recordGame(applicationContext, won = true)
-                    GameState.LOST -> StatsManager.recordGame(applicationContext, won = false)
-                    else -> Unit
+                // Only record stats if we're NOT loading a previous result
+                if (!viewModel.isLoadingPreviousResult.value) {
+                    when (state) {
+                        GameState.WON  -> StatsManager.recordGame(applicationContext, won = true)
+                        GameState.LOST -> StatsManager.recordGame(applicationContext, won = false)
+                        else -> Unit
+                    }
                 }
             }
         }
@@ -361,12 +403,23 @@ class MainActivity : AppCompatActivity() {
         val title = if (summary.won) "You won! 🎉" else "Nice try!"
         val defLine = summary.definition?.let { "Definition: $it" } ?: "Definition: (not available)"
         val synLine = summary.synonym?.let { "Synonym: $it" } ?: "Synonym: (not available)"
+        val wordLine = summary.word?.let { "Word: $it" }
 
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(title)
             .setMessage("$defLine\n\n$synLine")
             .setPositiveButton("OK") { d, _ -> d.dismiss() }
             .show()
+
+        val parts = mutableListOf<String>()
+        if (wordLine != null) parts += wordLine
+        parts += defLine
+        parts += synLine
+
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(parts.joinToString("\n\n"))
+            .setPositiveButton("OK") { d, _ -> d.dismiss() }.show()
     }
 
     private fun showDailyEndDialog(summary: EndGameSummary) {

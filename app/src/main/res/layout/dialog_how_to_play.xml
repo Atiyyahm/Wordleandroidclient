@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="How To Play"
+            android:textStyle="bold"
+            android:textSize="22sp"
+            android:textColor="@android:color/white"
+            android:paddingBottom="8dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Guess the Wordle in 6 tries."
+            android:textColor="@android:color/white"
+            android:paddingBottom="8dp"/>
+
+        <!-- Bullets -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• Each guess must be a valid 5-letter word."
+                android:textColor="#CFEAFF"
+                android:paddingBottom="6dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• Tiles change color to show how close your guess was."
+                android:textColor="#CFEAFF"/>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Examples"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:paddingBottom="8dp"/>
+
+        <!-- Example 1: W in correct spot -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="6dp">
+
+            <TextView style="@style/HowToTile" android:background="@drawable/tile_example_green"  android:text="W"/>
+            <TextView style="@style/HowToTile" android:background="@drawable/tile_example_neutral" android:text="O"/>
+            <TextView style="@style/HowToTile" android:background="@drawable/tile_example_neutral" android:text="R"/>
+            <TextView style="@style/HowToTile" android:background="@drawable/tile_example_neutral" android:text="D"/>
+            <TextView style="@style/HowToTile" android:background="@drawable/tile_example_neutral" android:text="Y"/>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="W is in the word and in the correct spot."
+            android:textColor="#CFEAFF"
+            android:paddingBottom="12dp"/>
+
+        <!-- Example 2: I present but wrong spot -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="6dp">
+
+            <TextView style="@style/HowToTile" android:background="@drawable/tile_example_neutral" android:text="L"/>
+            <TextView style="@style/HowToTile" android:background="@drawable/tile_example_yellow"  android:text="I"/>
+            <TextView style="@style/HowToTile" android:background="@drawable/tile_example_neutral" android:text="G"/>
+            <TextView style="@style/HowToTile" android:background="@drawable/tile_example_neutral" android:text="H"/>
+            <TextView style="@style/HowToTile" android:background="@drawable/tile_example_neutral" android:text="T"/>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="I is in the word but in the wrong spot."
+            android:textColor="#CFEAFF"
+            android:paddingBottom="12dp"/>
+
+        <!-- Example 3: U absent -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="6dp">
+
+            <TextView style="@style/HowToTile" android:background="@drawable/tile_example_neutral" android:text="R"/>
+            <TextView style="@style/HowToTile" android:background="@drawable/tile_example_neutral" android:text="O"/>
+            <TextView style="@style/HowToTile" android:background="@drawable/tile_example_neutral" android:text="G"/>
+            <TextView style="@style/HowToTile" android:background="@drawable/tile_example_absent"  android:text="U"/>
+            <TextView style="@style/HowToTile" android:background="@drawable/tile_example_neutral" android:text="E"/>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="U is not in the word in any spot."
+            android:textColor="#CFEAFF"/>
+    </LinearLayout>
+</ScrollView>

@@ -1,4 +1,4 @@
-package vcmsa.projects.wordleandroidclient.vcmsa.projects.wordleandroidclient.auth
+package vcmsa.projects.wordleandroidclient.auth
 
 import android.app.Activity
 import android.content.Intent
