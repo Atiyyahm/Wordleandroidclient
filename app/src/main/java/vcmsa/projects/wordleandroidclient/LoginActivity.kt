@@ -16,6 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import vcmsa.projects.wordleandroidclient.UserProfile
+import vcmsa.projects.wordleandroidclient.auth.BiometricHelper
 
 class LoginActivity : AppCompatActivity() {
 
@@ -28,6 +29,8 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnSignup: Button
     private lateinit var btnGoogle: View
     private lateinit var progress: ProgressBar
+
+    private lateinit var btnBiometric: Button
 
     private val googleLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -71,6 +74,7 @@ class LoginActivity : AppCompatActivity() {
         btnLogin = findViewById(R.id.btnLogin)
         btnSignup = findViewById(R.id.btnSignup)
         btnGoogle = findViewById(R.id.btnGoogle)
+        btnBiometric = findViewById(R.id.btnBiometric)
         progress = findViewById(R.id.progress)
 
         btnLogin.setOnClickListener {
@@ -82,6 +86,7 @@ class LoginActivity : AppCompatActivity() {
                 try {
                     auth.signInWithEmailAndPassword(email, pass).await()
                     ensureProfile()
+                    toast("Next time you can use biometrics to log in faster")
                     goToDashboard()
                 } catch (e: Exception) {
                     toast("Login failed: ${e.localizedMessage}")
@@ -95,7 +100,28 @@ class LoginActivity : AppCompatActivity() {
         }
 
         btnGoogle.setOnClickListener { startGoogle() }
+
+        // --- Biometric quick login (only show if supported & returning user) ---
+        if (BiometricHelper.canAuthenticate(this) && auth.currentUser != null) {
+            btnBiometric.visibility = View.VISIBLE
+            btnBiometric.setOnClickListener {
+                BiometricHelper.showPrompt(
+                    this,
+                    title = "Quick Login",
+                    subtitle = "Use fingerprint or face unlock to continue",
+                    onSuccess = {
+                        goToDashboard()
+                    },
+                    onFailure = {
+                        toast("Authentication failed")
+                    }
+                )
+            }
+        } else {
+            btnBiometric.visibility = View.GONE
+        }
     }
+
 
     private fun startGoogle() {
         //  Request the ID token so account.idToken is not null

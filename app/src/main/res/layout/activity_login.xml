@@ -75,5 +75,20 @@
                     android:textColor="@android:color/black" android:layout_marginStart="8dp"/>
             </LinearLayout>
         </LinearLayout>
+
+        <Button
+            android:id="@+id/btnBiometric"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:text="Login with Fingerprint"
+            android:background="@drawable/btn_outline_pink"
+            android:textAllCaps="true"
+            android:textStyle="bold"
+            android:textColor="#FF60C6"
+            android:visibility="gone"
+            android:drawableStart="@drawable/ic_fingerprint"
+            android:drawablePadding="8dp"/>
+
     </LinearLayout>
 </ScrollView>
