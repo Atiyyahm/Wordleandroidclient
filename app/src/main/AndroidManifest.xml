@@ -58,9 +58,7 @@
             android:exported="false" />
 
         <!-- Leaderboard -->
-        <activity
-            android:name="vcmsa.projects.wordleandroidclient.LeaderboardActivity"
-            android:exported="false" />
+        <activity android:name=".leaderboard.LeaderboardActivity" />
 
         <!-- Multiplayer waiting room  -->
         <activity android:name=".multiplayer.MultiplayerModeActivity" />

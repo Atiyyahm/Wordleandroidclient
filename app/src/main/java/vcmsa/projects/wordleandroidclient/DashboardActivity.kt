@@ -165,7 +165,7 @@ class DashboardActivity : AppCompatActivity() {
             bottomNav.selectedItemId = R.id.nav_multiplayer
         }
         findViewById<View>(R.id.qaLeaderboard).setOnClickListener {
-            showComingSoon("Leaderboard")
+            startActivity(Intent(this, vcmsa.projects.wordleandroidclient.leaderboard.LeaderboardActivity::class.java))
         }
         findViewById<View>(R.id.qaStats).setOnClickListener {
             showComingSoon("Stats")
@@ -206,7 +206,7 @@ class DashboardActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_leaderboard -> {
-                    showComingSoon("Leaderboard")
+                    startActivity(Intent(this, vcmsa.projects.wordleandroidclient.leaderboard.LeaderboardActivity::class.java))
                     true
                 }
                 R.id.nav_profile -> {

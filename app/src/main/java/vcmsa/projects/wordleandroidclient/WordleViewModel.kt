@@ -611,13 +611,16 @@ class WordleViewModel(
             val db = FirebaseFirestore.getInstance()
             val docId = "${meta.date}_${meta.lang}_${user.uid}"
 
+            // Convert each feedback row list into a string like "GYAAG"
+            val feedbackStrings = feedbackRows.map { it.joinToString("") }
+
             val payload = hashMapOf(
                 "uid" to user.uid,
                 "date" to meta.date,
                 "lang" to meta.lang,
                 "mode" to "daily",
                 "guesses" to guesses,
-                "feedbackRows" to feedbackRows,
+                "feedbackRows" to feedbackStrings,  // ✅ Flattened list
                 "won" to won,
                 "guessCount" to guesses.size,
                 "durationSec" to 0,
@@ -632,6 +635,7 @@ class WordleViewModel(
             Log.e("WordleVM", "❌ Firestore write failed: ${e.message}", e)
         }
     }
+
     private fun advanceOrLoseDaily() {
         if (currentGuessRow < 5) {
             currentGuessRow++
